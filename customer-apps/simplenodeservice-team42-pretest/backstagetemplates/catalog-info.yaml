@@ -1,0 +1,47 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: "simplenodeservice-team42-pretest"
+  title: "simplenodeservice-team42-pretest"
+  description: "Template for the simplenodeservice owned and operated by team42 in environment pretest"
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    # Not working
+    'backstage.io/kubernetes-label-selector': 'app.kubernetes.io/name=userinterface'
+    'backstage.io/kubernetes-namespace': 'simplenodeservice-team42-pretest'
+    argocd/app-name: simplenodeservice-team42-pretest
+  links:
+    - url: https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git
+      title: Github Repo
+      icon: github
+    - url: https://scaling-space-barnacle-9w9vp5qpxp6fx7g4-80.app.github.dev/simplenodeservice-team42-pretest
+      title: "Browse Application"
+      icon: subject
+    - title: View in ArgoCD
+      icon: catalog
+      url: https://scaling-space-barnacle-9w9vp5qpxp6fx7g4-30100.app.github.dev/applications/argocd/simplenodeservice-team42-pretest
+    - title: View in Dynatrace
+      icon: catalog
+      url: https://ryo61641.apps.dynatrace.com
+    - url: https://community.dynatrace.com
+      title: Dynatrace community
+      icon: dashboard
+spec:
+  type: website
+  owner: team42
+  lifecycle: pretest
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: "team42"
+  description: Group for application team team42
+spec:
+  type: business-unit
+  profile:
+    displayName: Team Liquid X-Change
+    email: team42@example.com
+    picture: https://example.com/staff/jenny-with-party-hat.jpeg
+  parent: applications
+  children: []
+#   members: [jdoe]

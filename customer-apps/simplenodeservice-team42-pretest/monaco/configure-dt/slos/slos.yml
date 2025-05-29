@@ -1,0 +1,14 @@
+configs:
+- id: simplenodeservice-team42-pretest_slo
+  config:
+    name: "simplenodeservice-team42-pretest Availability"
+    parameters:
+      metricName: "simplenodeservice_team42_pretest_availability"
+      metricExpression: "(100)*(builtin:service.errors.server.successCount:splitBy()):value:default(0)/(builtin:service.requestCount.server:splitBy()):value:default(0)"
+      filter: "type(SERVICE), tag([KUBERNETES]app.kubernetes.io/part-of:simplenodeservice-team42),tag([KUBERNETES]dynatrace-release-stage:pretest)"
+      thresholdTarget: "99.98"
+      thresholdWarning: "99.99"
+    template: slos.json
+    skip: false
+  type:
+    api: slo
