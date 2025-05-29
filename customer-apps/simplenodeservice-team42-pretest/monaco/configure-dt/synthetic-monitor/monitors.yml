@@ -1,0 +1,14 @@
+configs:
+- id: simplenodeservice-team42-pretest_synthetic
+  config:
+    name: "Healthcheck simplenodeservice-team42-pretest"
+    parameters:
+      baseUrl: "https://scaling-space-barnacle-9w9vp5qpxp6fx7g4-80.app.github.dev/simplenodeservice-team42-pretest"
+      frequencyMin: "1"
+      enabled: "true"
+      geoLocation: "GEOLOCATION-45AB48D9D6925ECC"
+      teamIdentifier: "team42"
+    template: health-check-http.json
+    skip: false
+  type:
+    api: synthetic-monitor
