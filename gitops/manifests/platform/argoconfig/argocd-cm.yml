@@ -14,4 +14,4 @@ data:
   # Enables application status badge feature
   statusbadge.enabled: "true"
   context: |
-    argocdUrl: "https://scaling-space-barnacle-9w9vp5qpxp6fx7g4-ARGOCD_PORT_NUMBER_PLACEHOLDER.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER"  
+    argocdUrl: "https://scaling-space-barnacle-9w9vp5qpxp6fx7g4-30100.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER"  
