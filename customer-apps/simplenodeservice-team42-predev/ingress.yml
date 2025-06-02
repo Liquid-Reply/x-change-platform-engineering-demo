@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "simplenodeservice-team42"
+  namespace: "simplenodeservice-team42-predev"
+  labels:
+    dt.owner: "team42"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /simplenodeservice-team42-predev(/)*(.*)
+          #- path: "/simplenodeservice-team42-predev"
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: "simplenodeservice-team42"
+                port:
+                  number: 80
