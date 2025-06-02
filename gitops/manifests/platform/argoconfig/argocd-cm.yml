@@ -14,4 +14,4 @@ data:
   # Enables application status badge feature
   statusbadge.enabled: "true"
   context: |
-    argocdUrl: "https://legendary-system-55q6wr4w79gh4qwp-30100.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER"  
+    argocdUrl: "https://legendary-system-55q6wr4w79gh4qwp-30100.app.github.dev"  
