@@ -18,7 +18,7 @@ configs:
   config:
     name: "argo | platform | healthcheck"
     parameters:
-      baseUrl: "https://legendary-system-55q6wr4w79gh4qwp-ARGOCD_PORT_NUMBER_PLACEHOLDER.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER"
+      baseUrl: "https://legendary-system-55q6wr4w79gh4qwp-30100.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER"
       frequencyMin: "1"
       enabled: "true"
       geoLocation: "GEOLOCATION-45AB48D9D6925ECC"
