@@ -1,0 +1,14 @@
+configs:
+- id: simplenodeservice-team42-predev_synthetic
+  config:
+    name: "Healthcheck simplenodeservice-team42-predev"
+    parameters:
+      baseUrl: "https://legendary-system-55q6wr4w79gh4qwp-80.app.github.dev/simplenodeservice-team42-predev"
+      frequencyMin: "1"
+      enabled: "true"
+      geoLocation: "GEOLOCATION-45AB48D9D6925ECC"
+      teamIdentifier: "team42"
+    template: health-check-http.json
+    skip: false
+  type:
+    api: synthetic-monitor
