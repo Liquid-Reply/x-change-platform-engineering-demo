@@ -15,6 +15,12 @@
 	// some base images require a specific user name
 	"remoteUser": "vscode",
 
+	"features": {
+		// Installs the latest version without extra options. For available
+		// settings see https://containers.dev/features
+		"ghcr.io/devcontainers/features/sshd:1": {}
+	},
+
 	// Install extensions
 	"customizations": {
 		"vscode": {	
