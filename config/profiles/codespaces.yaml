@@ -1,0 +1,52 @@
+# GitHub Codespaces Environment Profile
+# Configuration for running the IDP platform in GitHub Codespaces with Kind
+
+environment: codespaces
+
+# Cluster configuration
+cluster:
+  type: kind              # Kind (Kubernetes in Docker)
+  config_file: .devcontainer/kind-cluster.yml
+  timeout: 300s           # Cluster creation timeout
+
+# Port configuration
+ports:
+  argocd: 30100
+  backstage: 30105
+  demo_app: 80
+
+# URL configuration
+urls:
+  # Codespaces automatically handles port forwarding via:
+  # https://{CODESPACE_NAME}-{PORT}.app.github.dev
+  use_port_forwarding: true
+  port_forwarding_domain: .app.github.dev
+
+# Secrets configuration
+secrets:
+  source: eso             # External Secrets Operator
+  # Codespaces uses ESO for production-like secrets management
+
+# Component toggles
+# Codespaces has more resources, so more components enabled by default
+components:
+  argocd: true            # Required - GitOps engine
+  backstage: true         # Required - Developer portal
+  cert_manager: true      # Required - Certificate management
+  ingress: true           # Required - Ingress controller
+  opentelemetry: true     # Required - Tracing
+  dynatrace: true         # Required - Full observability
+  keptn: true             # Enabled - Lifecycle toolkit (can override with INSTALL_KEPTN=false)
+  openfeature: true       # Enabled - Feature flags
+  kubeaudit_cronjobs: true  # Enabled - Security scanning
+
+# Dynatrace configuration
+dynatrace:
+  # Credentials provided via environment variables:
+  #   DT_ENV_NAME, DT_ENV, DT_RW_API_TOKEN
+  skip_if_missing: false  # Fail if DT credentials missing in Codespaces
+
+# Token configuration
+tokens:
+  expiration_days: 1      # API tokens expire after 1 day
+  auto_renewal: false     # Manual renewal via renew_api_token.py

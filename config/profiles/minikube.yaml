@@ -1,0 +1,49 @@
+# Minikube Environment Profile
+# Configuration for running the IDP platform on local minikube
+
+environment: minikube
+
+# Cluster configuration
+cluster:
+  driver: docker          # docker, podman, hyperkit, virtualbox
+  cpus: 2                 # Number of CPUs
+  memory: 4096           # Memory in MB
+  addons:
+    - ingress            # NGINX ingress controller
+    - metrics-server     # For resource metrics
+
+# Port configuration
+ports:
+  argocd: 30100
+  backstage: 30105
+  demo_app: 80
+
+# URL configuration
+urls:
+  use_nip_io: false      # Set to true to use $(minikube ip).nip.io for DNS
+  # When false, uses localhost with NodePort access
+
+# Secrets configuration
+secrets:
+  source: local          # 'local' for secrets-minikube.yaml, 'eso' for External Secrets Operator
+  local_file: secrets-minikube.yaml
+
+# Component toggles
+# Set to false to disable components and save resources
+components:
+  argocd: true           # Required - GitOps engine
+  backstage: true        # Required - Developer portal
+  cert_manager: true     # Required - Certificate management
+  ingress: true          # Required - Ingress controller
+  opentelemetry: true    # Recommended - Tracing
+  dynatrace: false       # Optional - Set to true if you have DT credentials
+  keptn: false           # Optional - Lifecycle toolkit (resource heavy)
+  openfeature: false     # Optional - Feature flags
+  kubeaudit_cronjobs: false  # Optional - Security scanning
+
+# Dynatrace configuration (only used if dynatrace component is enabled)
+dynatrace:
+  # Leave empty to skip Dynatrace integration
+  # Set via environment variables or secrets-minikube.yaml:
+  #   DT_ENV_NAME, DT_ENV, DT_RW_API_TOKEN
+  skip_if_missing: true  # Don't fail if DT credentials missing
