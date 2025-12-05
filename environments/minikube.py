@@ -280,6 +280,82 @@ class MinikubeEnvironment(EnvironmentBase):
         """Return the kubectl context name for this cluster."""
         return "minikube"
 
+    def get_github_info(self) -> Dict[str, str]:
+        """
+        Get GitHub repository information.
+
+        For minikube, tries multiple sources:
+        1. Environment variables (GITHUB_REPOSITORY)
+        2. Profile configuration
+        3. Git remote origin URL (local repo detection)
+
+        Returns:
+            Dict with org, repo, full_path, and git_url keys.
+        """
+        # First try parent implementation (env vars and profile)
+        info = super().get_github_info()
+
+        # If we got valid info, return it
+        if info.get('git_url'):
+            return info
+
+        # Fallback: read from git remote
+        try:
+            result = subprocess.run(
+                ["git", "remote", "get-url", "origin"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode == 0:
+                remote_url = result.stdout.strip()
+                return self._parse_git_remote(remote_url)
+        except Exception as e:
+            logger.warning(f"Could not get git remote: {e}")
+
+        # Return empty info if all else fails
+        logger.warning("Could not determine GitHub repository info")
+        return {"org": "", "repo": "", "full_path": "", "git_url": ""}
+
+    def _parse_git_remote(self, remote_url: str) -> Dict[str, str]:
+        """
+        Parse git remote URL to extract org/repo info.
+
+        Handles both SSH and HTTPS formats:
+        - git@github.com:org/repo.git
+        - https://github.com/org/repo.git
+        - git@custom.github.com:org/repo.git
+        """
+        import re
+
+        # SSH format: git@host:org/repo.git
+        ssh_match = re.match(r'git@[^:]+:([^/]+)/([^/]+?)(?:\.git)?$', remote_url)
+        if ssh_match:
+            org, repo = ssh_match.groups()
+            # Convert SSH to HTTPS URL for ArgoCD
+            https_url = f"https://github.com/{org}/{repo}.git"
+            return {
+                "org": org,
+                "repo": repo,
+                "full_path": f"{org}/{repo}",
+                "git_url": https_url
+            }
+
+        # HTTPS format: https://github.com/org/repo.git
+        https_match = re.match(r'https://[^/]+/([^/]+)/([^/]+?)(?:\.git)?$', remote_url)
+        if https_match:
+            org, repo = https_match.groups()
+            git_url = remote_url if remote_url.endswith('.git') else f"{remote_url}.git"
+            return {
+                "org": org,
+                "repo": repo,
+                "full_path": f"{org}/{repo}",
+                "git_url": git_url
+            }
+
+        logger.warning(f"Could not parse git remote URL: {remote_url}")
+        return {"org": "", "repo": "", "full_path": "", "git_url": ""}
+
     def start_tunnel(self) -> subprocess.Popen:
         """
         Start minikube tunnel for LoadBalancer services.
