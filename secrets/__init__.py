@@ -7,6 +7,22 @@ Provides unified secrets loading from multiple sources:
 - External Secrets Operator (production)
 """
 
-from secrets.manager import SecretsManager, SecretsNotFoundError
+from secrets.manager import (
+    SecretsManager,
+    SecretsNotFoundError,
+    SecretsValidationError,
+    DynatraceSecrets,
+    GitHubSecrets,
+    PlatformSecrets,
+    get_secrets_manager,
+)
 
-__all__ = ['SecretsManager', 'SecretsNotFoundError']
+__all__ = [
+    'SecretsManager',
+    'SecretsNotFoundError',
+    'SecretsValidationError',
+    'DynatraceSecrets',
+    'GitHubSecrets',
+    'PlatformSecrets',
+    'get_secrets_manager',
+]

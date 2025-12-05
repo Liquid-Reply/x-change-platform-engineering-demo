@@ -175,3 +175,37 @@ class EnvironmentBase(ABC):
             memory=cluster.get('memory', 4096),
             addons=cluster.get('addons', [])
         )
+
+    def get_github_info(self) -> Dict[str, str]:
+        """
+        Get GitHub repository information.
+
+        Returns:
+            Dict with org, repo, full_path, and git_url keys.
+            Default implementation reads from environment or profile.
+        """
+        import os
+
+        # Try environment variables first
+        github_repo = os.environ.get("GITHUB_REPOSITORY", "")
+        repo_name = os.environ.get("RepositoryName", "")
+
+        # Fall back to profile
+        if not github_repo:
+            github_config = self.profile.get('github', {})
+            github_repo = github_config.get('repository', '')
+            repo_name = github_config.get('repo_name', '')
+
+        org = ""
+        if "/" in github_repo:
+            parts = github_repo.split("/")
+            org = parts[0]
+            if not repo_name:
+                repo_name = parts[1] if len(parts) > 1 else ""
+
+        return {
+            "org": org,
+            "repo": repo_name,
+            "full_path": github_repo,
+            "git_url": f"https://github.com/{github_repo}.git" if github_repo else ""
+        }
