@@ -29,8 +29,8 @@ spec:
              \"proj_name\": \"${{ values.projectName }}\",
              \"stage\": \"${{ values.releaseStage }}\", 
              \"owner\":\"${{ values.teamIdentifier }}\", 
-             \"git\" : \"GITHUB_DOT_COM_REPO_PLACEHOLDER\",
-             \"argocd\" : \"https://CODESPACE_NAME_PLACEHOLDER-ARGOCD_PORT_NUMBER_PLACEHOLDER.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER/applications/argocd/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}\",
+             \"git\" : \"https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git\",
+             \"argocd\" : \"https://minikube-30100.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER/applications/argocd/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}\",
              \"result\": \"success\" 
           }"
         ]
@@ -87,8 +87,8 @@ spec:
              \"proj_name\": \"${{ values.projectName }}\",
              \"stage\": \"${{ values.releaseStage }}\", 
              \"owner\":\"${{ values.teamIdentifier }}\", 
-             \"git\" : \"GITHUB_DOT_COM_REPO_PLACEHOLDER\",
-             \"argocd\" : \"https://CODESPACE_NAME_PLACEHOLDER-ARGOCD_PORT_NUMBER_PLACEHOLDER.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER/applications/argocd/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}\",
+             \"git\" : \"https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git\",
+             \"argocd\" : \"https://minikube-30100.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER/applications/argocd/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}\",
              \"result\": \"success\" 
           }"
         ]
@@ -145,8 +145,8 @@ spec:
              \"proj_name\": \"${{ values.projectName }}\",
              \"stage\": \"${{ values.releaseStage }}\", 
              \"owner\":\"${{ values.teamIdentifier }}\", 
-             \"git\" : \"GITHUB_DOT_COM_REPO_PLACEHOLDER\",
-             \"argocd\" : \"https://CODESPACE_NAME_PLACEHOLDER-ARGOCD_PORT_NUMBER_PLACEHOLDER.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER/applications/argocd/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}\",
+             \"git\" : \"https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git\",
+             \"argocd\" : \"https://minikube-30100.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER/applications/argocd/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}\",
              \"result\": \"success\" 
           }"
         ]
@@ -203,8 +203,8 @@ spec:
              \"proj_name\": \"${{ values.projectName }}\",
              \"stage\": \"${{ values.releaseStage }}\", 
              \"owner\":\"${{ values.teamIdentifier }}\", 
-             \"git\" : \"GITHUB_DOT_COM_REPO_PLACEHOLDER\",
-             \"argocd\" : \"https://CODESPACE_NAME_PLACEHOLDER-ARGOCD_PORT_NUMBER_PLACEHOLDER.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER/applications/argocd/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}\",
+             \"git\" : \"https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git\",
+             \"argocd\" : \"https://minikube-30100.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN_PLACEHOLDER/applications/argocd/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}\",
              \"result\": \"failed\" 
           }"          
         ]
