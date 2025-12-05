@@ -8,3 +8,10 @@ secrets-minikube.yaml
 secrets-*.yaml
 !secrets-*.yaml.example
 config/secrets-*.yaml
+settings.json
+CLAUDE.md
+CLAUDE copy.md
+.mcp.json
+AGENTS copy.md
+AGENTS.md
+.claude/mcp-servers.json
