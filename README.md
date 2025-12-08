@@ -104,6 +104,37 @@ In your fork, go to `Actions` and click the green button: `I understand my workf
 
 ## Setup Instructions
 
+### Local Development (Minikube/Kind)
+
+For local development without GitHub Codespaces:
+
+```bash
+# 1. Create secrets file
+echo "your-github-token" > secrets/github-token
+
+# 2. Optional: Add Dynatrace credentials
+cat > secrets/dt-credentials.env << 'EOF'
+DT_ENV_NAME=abc12345
+DT_ENV=live
+DT_RW_API_TOKEN=dt0c01.xxx
+DT_OAUTH_CLIENT_ID=dt0s02.xxx
+DT_OAUTH_CLIENT_SECRET=xxx
+DT_OAUTH_ACCOUNT_URN=urn:dtaccount:xxx
+EOF
+
+# 3. Run bootstrap
+./bootstrap.sh minikube   # or: ./bootstrap.sh kind
+```
+
+**Available environments:**
+- `minikube` - Local Kubernetes via Minikube
+- `kind` - Kubernetes in Docker
+- `codespaces` - GitHub Codespaces (auto-detected)
+
+**Access URLs:**
+- ArgoCD: http://localhost:30100
+- Backstage: http://localhost:30105
+
 ### Create Codespace Secrets
 
 In your fork:

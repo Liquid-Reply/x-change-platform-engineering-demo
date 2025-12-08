@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - argo-rollouts.yaml
+  - argocd.yaml
+  - backstage.yaml
+  - cert-manager.yaml
+  - dt.yaml
+  - ingress-nginx.yaml
+  - keptn.yaml
+  - kubeaudit.yaml
+  - monaco.yaml
+  - opentelemetry.yml

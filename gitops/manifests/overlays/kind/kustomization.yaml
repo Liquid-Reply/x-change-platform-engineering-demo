@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Kind (Kubernetes in Docker) environment overlay
+# - Base platform manifests
+# - Dynatrace integration
+# - Keptn lifecycle toolkit
+
+resources:
+  - ../../base
+  - ../../platform/dynatrace
+  - ../../platform/keptn

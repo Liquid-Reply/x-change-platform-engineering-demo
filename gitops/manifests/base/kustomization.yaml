@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Base platform manifests - included in all environments
+# Optional components (dynatrace, keptn) are added via overlays
+
+resources:
+  - ../platform/namespaces
+  - ../platform/argoconfig
+  - ../platform/backstage
+  - ../platform/ingress-nginx
+  - ../platform/argo-rollouts
+  - ../platform/kubeaudit
+  - ../platform/opentelemetry
