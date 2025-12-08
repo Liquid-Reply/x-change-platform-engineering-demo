@@ -323,11 +323,14 @@ class PlatformInstaller:
 
         # Add GitHub placeholders
         github_info = self.env.get_github_info()
+        repo_url = github_info.get('git_url', '')
         placeholders.update({
-            "GITHUB_DOT_COM_REPO_PLACEHOLDER": github_info.get('git_url', ''),
+            "GITHUB_DOT_COM_REPO_PLACEHOLDER": repo_url,
             "GITHUB_REPOSITORY_PLACEHOLDER": github_info.get('full_path', ''),
             "GITHUB_ORG_NAME_PLACEHOLDER": github_info.get('org', ''),
             "GITHUB_REPO_NAME_PLACEHOLDER": github_info.get('repo', ''),
+            # Kustomize overlay placeholder for ArgoCD applications
+            "REPO_URL_PLACEHOLDER": repo_url,
         })
 
         # Do the replacements
@@ -512,7 +515,8 @@ class PlatformInstaller:
         """Apply the platform GitOps configuration."""
         logger.info("Applying platform configuration...")
 
-        run_command(["kubectl", "apply", "-f", "gitops/platform.yml"])
+        # Use minikube-specific platform file with Kustomize overlay
+        run_command(["kubectl", "apply", "-f", "gitops/platform-minikube.yml"])
 
         # Wait for ArgoCD secret
         wait_for_artifact("argocd", "secret", "argocd-initial-admin-secret")

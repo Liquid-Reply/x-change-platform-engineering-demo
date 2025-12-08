@@ -1,0 +1,72 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Minikube overlay
+# IMPORTANT: This file is generated/updated by the installer
+# The https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git will be replaced with your actual repository URL
+
+resources:
+  - ../../base
+
+# Repository URL for this environment
+# Placeholder will be replaced by installer with actual repo URL
+patches:
+  # Apps with spec.source (single source)
+  - target:
+      kind: Application
+      name: argoconfig
+    patch: |-
+      - op: replace
+        path: /spec/source/repoURL
+        value: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+  - target:
+      kind: Application
+      name: argo-rollouts
+    patch: |-
+      - op: replace
+        path: /spec/source/repoURL
+        value: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+  - target:
+      kind: Application
+      name: backstage
+    patch: |-
+      - op: replace
+        path: /spec/source/repoURL
+        value: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+  - target:
+      kind: Application
+      name: dynatrace
+    patch: |-
+      - op: replace
+        path: /spec/source/repoURL
+        value: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+  - target:
+      kind: Application
+      name: ingress-nginx
+    patch: |-
+      - op: replace
+        path: /spec/source/repoURL
+        value: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+  - target:
+      kind: Application
+      name: namespaces
+    patch: |-
+      - op: replace
+        path: /spec/source/repoURL
+        value: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+
+  # Apps with spec.sources (multi-source) - patch first element
+  - target:
+      kind: Application
+      name: kubeaudit
+    patch: |-
+      - op: replace
+        path: /spec/sources/0/repoURL
+        value: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+  - target:
+      kind: Application
+      name: opentelemetry
+    patch: |-
+      - op: replace
+        path: /spec/sources/0/repoURL
+        value: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"

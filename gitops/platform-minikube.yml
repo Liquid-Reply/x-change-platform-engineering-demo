@@ -1,5 +1,3 @@
-# Default platform configuration - uses codespaces overlay
-# For minikube, use platform-minikube.yml instead
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,7 +7,8 @@ metadata:
     dt.owner: "platform_team"
 spec:
   source:
-    path: "gitops/applications/overlays/codespaces"
+    path: "gitops/applications/overlays/minikube"
+    # https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git - Replaced by installer with actual repository URL
     repoURL: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
     targetRevision: main
   destination:
