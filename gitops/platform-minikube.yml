@@ -8,9 +8,9 @@ metadata:
 spec:
   source:
     path: "gitops/applications/overlays/minikube"
-    # https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git - Replaced by installer with actual repository URL
-    repoURL: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
-    targetRevision: main
+    # Placeholders replaced by installer with actual values
+    repoURL: "REPO_URL_PLACEHOLDER"
+    targetRevision: TARGET_REVISION_PLACEHOLDER
   destination:
     namespace: argocd
     server: 'https://kubernetes.default.svc'

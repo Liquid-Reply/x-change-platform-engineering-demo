@@ -324,13 +324,18 @@ class PlatformInstaller:
         # Add GitHub placeholders
         github_info = self.env.get_github_info()
         repo_url = github_info.get('git_url', '')
+        # Get current git branch for targetRevision
+        branch_result = run_command(["git", "rev-parse", "--abbrev-ref", "HEAD"], ignore_errors=True)
+        target_revision = branch_result.stdout.strip() if branch_result.returncode == 0 else "main"
+
         placeholders.update({
             "GITHUB_DOT_COM_REPO_PLACEHOLDER": repo_url,
             "GITHUB_REPOSITORY_PLACEHOLDER": github_info.get('full_path', ''),
             "GITHUB_ORG_NAME_PLACEHOLDER": github_info.get('org', ''),
             "GITHUB_REPO_NAME_PLACEHOLDER": github_info.get('repo', ''),
-            # Kustomize overlay placeholder for ArgoCD applications
+            # Kustomize overlay placeholders for ArgoCD applications
             "REPO_URL_PLACEHOLDER": repo_url,
+            "TARGET_REVISION_PLACEHOLDER": target_revision,
         })
 
         # Do the replacements

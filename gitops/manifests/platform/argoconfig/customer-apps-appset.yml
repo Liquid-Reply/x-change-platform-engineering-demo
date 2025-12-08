@@ -8,7 +8,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
   - git:
-      repoURL: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+      repoURL: "REPO_URL_PLACEHOLDER"
       revision: HEAD
       directories:
       - path: "customer-apps/*"
@@ -27,7 +27,7 @@ spec:
     spec:
       project: "default"
       source:
-        repoURL: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+        repoURL: "REPO_URL_PLACEHOLDER"
         targetRevision: HEAD
         path: '{{.path.path}}'
       destination:
