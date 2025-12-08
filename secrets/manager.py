@@ -121,16 +121,24 @@ class SecretsManager:
         elif self.source == 'file':
             self._secrets = self._load_from_file()
         else:  # 'auto'
-            # Try environment first, then file
+            # Try environment first, then file as fallback
             self._secrets = self._load_from_env()
-            if not self._secrets.has_dynatrace() and self.secrets_file:
-                logger.info("Dynatrace secrets not in env, trying file...")
+
+            # Check if we need to supplement from file
+            needs_file = (
+                (not self._secrets.has_dynatrace() or not self._secrets.has_github())
+                and self.secrets_file
+            )
+
+            if needs_file:
+                logger.info("Some secrets not in env, trying file...")
                 file_secrets = self._load_from_file()
-                if file_secrets.has_dynatrace():
-                    self._secrets = PlatformSecrets(
-                        dynatrace=file_secrets.dynatrace,
-                        github=self._secrets.github or file_secrets.github
-                    )
+
+                # Merge file secrets with env secrets (env takes precedence)
+                self._secrets = PlatformSecrets(
+                    dynatrace=self._secrets.dynatrace or file_secrets.dynatrace,
+                    github=self._secrets.github or file_secrets.github
+                )
 
         self._validate()
         return self._secrets
