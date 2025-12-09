@@ -1,0 +1,75 @@
+# Chainsaw Test: ArgoCD Health
+# Verifies ArgoCD core components are running and healthy
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: argocd-health
+spec:
+  description: Verify ArgoCD deployments are healthy
+  steps:
+    - name: check-argocd-server
+      description: ArgoCD server deployment must be available
+      try:
+        - assert:
+            resource:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: argocd-server
+                namespace: argocd
+              status:
+                (conditions[?type == 'Available']):
+                  - status: "True"
+
+    - name: check-argocd-repo-server
+      description: ArgoCD repo-server deployment must be available
+      try:
+        - assert:
+            resource:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: argocd-repo-server
+                namespace: argocd
+              status:
+                (conditions[?type == 'Available']):
+                  - status: "True"
+
+    - name: check-argocd-applicationset-controller
+      description: ArgoCD ApplicationSet controller must be available
+      try:
+        - assert:
+            resource:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: argocd-applicationset-controller
+                namespace: argocd
+              status:
+                (conditions[?type == 'Available']):
+                  - status: "True"
+
+    - name: check-argocd-redis
+      description: ArgoCD Redis deployment must be available
+      try:
+        - assert:
+            resource:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: argocd-redis
+                namespace: argocd
+              status:
+                (conditions[?type == 'Available']):
+                  - status: "True"
+
+    - name: check-argocd-service
+      description: ArgoCD server service must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: argocd-server
+                namespace: argocd

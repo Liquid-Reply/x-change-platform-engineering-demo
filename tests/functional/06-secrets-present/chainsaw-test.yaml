@@ -1,0 +1,46 @@
+# Chainsaw Test: Required Secrets Present
+# Verifies all required secrets exist in their namespaces
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: secrets-present
+spec:
+  description: Verify required secrets exist
+  steps:
+    - name: check-argocd-admin-secret
+      description: ArgoCD initial admin secret must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: argocd-initial-admin-secret
+                namespace: argocd
+
+    - name: check-backstage-secrets
+      description: Backstage secrets must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: backstage-secrets
+                namespace: backstage
+
+    - name: check-backstage-secret-has-data
+      description: Backstage secrets must contain data
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              #!/bin/bash
+              set -e
+              # Check that backstage-secrets has data
+              COUNT=$(kubectl get secret backstage-secrets -n backstage -o jsonpath='{.data}' | jq 'keys | length')
+              if [ "$COUNT" -lt 1 ]; then
+                echo "backstage-secrets has no data keys"
+                exit 1
+              fi
+              echo "backstage-secrets has $COUNT data keys"

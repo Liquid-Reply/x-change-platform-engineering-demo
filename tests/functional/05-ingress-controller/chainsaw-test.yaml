@@ -1,0 +1,43 @@
+# Chainsaw Test: Ingress Controller
+# Verifies ingress-nginx controller is running
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ingress-controller
+spec:
+  description: Verify ingress-nginx controller is healthy
+  steps:
+    - name: check-ingress-nginx-controller
+      description: Ingress-nginx controller deployment must be available
+      try:
+        - assert:
+            resource:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: ingress-nginx-controller
+                namespace: ingress-nginx
+              status:
+                (conditions[?type == 'Available']):
+                  - status: "True"
+
+    - name: check-ingress-nginx-service
+      description: Ingress-nginx service must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: ingress-nginx-controller
+                namespace: ingress-nginx
+
+    - name: check-ingress-class
+      description: IngressClass nginx must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: networking.k8s.io/v1
+              kind: IngressClass
+              metadata:
+                name: nginx

@@ -1,0 +1,33 @@
+# Chainsaw Configuration
+# Global settings for all functional tests
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Configuration
+metadata:
+  name: idp-functional-tests
+spec:
+  # Test execution settings
+  timeouts:
+    apply: 30s
+    assert: 2m
+    cleanup: 30s
+    delete: 30s
+    error: 30s
+    exec: 1m
+
+  # Parallel execution (tests are independent)
+  parallel: 4
+
+  # Skip cleanup on failure for debugging
+  skipDelete: false
+
+  # Fail fast - stop on first failure
+  failFast: false
+
+  # Catch failures for all tests
+  catch:
+    - events:
+        namespace: '*'
+    - podLogs:
+        namespace: argocd
+        selector: app.kubernetes.io/name=argocd-server
+        tail: 50

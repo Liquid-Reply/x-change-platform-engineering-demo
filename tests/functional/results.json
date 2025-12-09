@@ -1,0 +1,531 @@
+{
+  "name": "chainsaw-report",
+  "startTime": "2025-12-09T09:15:49.179232+01:00",
+  "endTime": "2025-12-09T09:16:01.094918+01:00",
+  "tests": [
+    {
+      "basePath": "05-ingress-controller",
+      "name": "ingress-controller",
+      "startTime": "2025-12-09T09:15:49.181341+01:00",
+      "endTime": "2025-12-09T09:15:49.964765+01:00",
+      "steps": [
+        {
+          "name": "check-ingress-nginx-controller",
+          "startTime": "2025-12-09T09:15:49.474244+01:00",
+          "endTime": "2025-12-09T09:15:49.670985+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.47427+01:00",
+              "endTime": "2025-12-09T09:15:49.670972+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-ingress-nginx-service",
+          "startTime": "2025-12-09T09:15:49.670988+01:00",
+          "endTime": "2025-12-09T09:15:49.870008+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.670999+01:00",
+              "endTime": "2025-12-09T09:15:49.869992+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-ingress-class",
+          "startTime": "2025-12-09T09:15:49.870018+01:00",
+          "endTime": "2025-12-09T09:15:49.964764+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.870029+01:00",
+              "endTime": "2025-12-09T09:15:49.964741+01:00"
+            }
+          ]
+        },
+        {
+          "name": "@cleanup",
+          "startTime": "2025-12-09T09:15:49.964799+01:00",
+          "endTime": "2025-12-09T09:15:55.212499+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "delete",
+              "startTime": "2025-12-09T09:15:49.964799+01:00",
+              "endTime": "2025-12-09T09:15:55.212498+01:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "basePath": "01-platform-namespaces",
+      "name": "platform-namespaces",
+      "startTime": "2025-12-09T09:15:49.181275+01:00",
+      "endTime": "2025-12-09T09:15:50.359435+01:00",
+      "steps": [
+        {
+          "name": "check-argocd-namespace",
+          "startTime": "2025-12-09T09:15:49.466506+01:00",
+          "endTime": "2025-12-09T09:15:49.576225+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.466542+01:00",
+              "endTime": "2025-12-09T09:15:49.576216+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-backstage-namespace",
+          "startTime": "2025-12-09T09:15:49.576231+01:00",
+          "endTime": "2025-12-09T09:15:49.779355+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.576243+01:00",
+              "endTime": "2025-12-09T09:15:49.779339+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-ingress-nginx-namespace",
+          "startTime": "2025-12-09T09:15:49.779361+01:00",
+          "endTime": "2025-12-09T09:15:49.964394+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.779382+01:00",
+              "endTime": "2025-12-09T09:15:49.964377+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-argo-rollouts-namespace",
+          "startTime": "2025-12-09T09:15:49.964403+01:00",
+          "endTime": "2025-12-09T09:15:50.166398+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.964442+01:00",
+              "endTime": "2025-12-09T09:15:50.166369+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-opentelemetry-namespace",
+          "startTime": "2025-12-09T09:15:50.166404+01:00",
+          "endTime": "2025-12-09T09:15:50.359434+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:50.166426+01:00",
+              "endTime": "2025-12-09T09:15:50.359421+01:00"
+            }
+          ]
+        },
+        {
+          "name": "@cleanup",
+          "startTime": "2025-12-09T09:15:50.359446+01:00",
+          "endTime": "2025-12-09T09:15:55.71603+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "delete",
+              "startTime": "2025-12-09T09:15:50.359447+01:00",
+              "endTime": "2025-12-09T09:15:55.716029+01:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "basePath": "02-argocd-health",
+      "name": "argocd-health",
+      "startTime": "2025-12-09T09:15:49.181344+01:00",
+      "endTime": "2025-12-09T09:15:50.366815+01:00",
+      "steps": [
+        {
+          "name": "check-argocd-server",
+          "startTime": "2025-12-09T09:15:49.475075+01:00",
+          "endTime": "2025-12-09T09:15:49.674496+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.475134+01:00",
+              "endTime": "2025-12-09T09:15:49.674488+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-argocd-repo-server",
+          "startTime": "2025-12-09T09:15:49.674499+01:00",
+          "endTime": "2025-12-09T09:15:49.870881+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.67451+01:00",
+              "endTime": "2025-12-09T09:15:49.870863+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-argocd-applicationset-controller",
+          "startTime": "2025-12-09T09:15:49.870884+01:00",
+          "endTime": "2025-12-09T09:15:50.072377+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:49.870892+01:00",
+              "endTime": "2025-12-09T09:15:50.072348+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-argocd-redis",
+          "startTime": "2025-12-09T09:15:50.072385+01:00",
+          "endTime": "2025-12-09T09:15:50.271651+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:50.072412+01:00",
+              "endTime": "2025-12-09T09:15:50.271621+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-argocd-service",
+          "startTime": "2025-12-09T09:15:50.271658+01:00",
+          "endTime": "2025-12-09T09:15:50.366814+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:50.271722+01:00",
+              "endTime": "2025-12-09T09:15:50.366807+01:00"
+            }
+          ]
+        },
+        {
+          "name": "@cleanup",
+          "startTime": "2025-12-09T09:15:50.366826+01:00",
+          "endTime": "2025-12-09T09:15:55.676173+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "delete",
+              "startTime": "2025-12-09T09:15:50.366826+01:00",
+              "endTime": "2025-12-09T09:15:55.676172+01:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "basePath": "07-kustomize-build",
+      "name": "kustomize-build",
+      "startTime": "2025-12-09T09:15:49.181327+01:00",
+      "endTime": "2025-12-09T09:15:52.084412+01:00",
+      "steps": [
+        {
+          "name": "build-minikube-overlay",
+          "startTime": "2025-12-09T09:15:49.474263+01:00",
+          "endTime": "2025-12-09T09:15:49.794898+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "script",
+              "startTime": "2025-12-09T09:15:49.474287+01:00",
+              "endTime": "2025-12-09T09:15:49.794891+01:00"
+            }
+          ]
+        },
+        {
+          "name": "build-codespaces-overlay",
+          "startTime": "2025-12-09T09:15:49.794902+01:00",
+          "endTime": "2025-12-09T09:15:50.161577+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "script",
+              "startTime": "2025-12-09T09:15:49.794913+01:00",
+              "endTime": "2025-12-09T09:15:50.161561+01:00"
+            }
+          ]
+        },
+        {
+          "name": "build-kind-overlay",
+          "startTime": "2025-12-09T09:15:50.161584+01:00",
+          "endTime": "2025-12-09T09:15:50.561675+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "script",
+              "startTime": "2025-12-09T09:15:50.161596+01:00",
+              "endTime": "2025-12-09T09:15:50.561658+01:00"
+            }
+          ]
+        },
+        {
+          "name": "validate-dry-run",
+          "startTime": "2025-12-09T09:15:50.561683+01:00",
+          "endTime": "2025-12-09T09:15:52.084411+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "script",
+              "startTime": "2025-12-09T09:15:50.561704+01:00",
+              "endTime": "2025-12-09T09:15:52.084403+01:00"
+            }
+          ]
+        },
+        {
+          "name": "@cleanup",
+          "startTime": "2025-12-09T09:15:52.084427+01:00",
+          "endTime": "2025-12-09T09:15:57.189031+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "delete",
+              "startTime": "2025-12-09T09:15:52.084427+01:00",
+              "endTime": "2025-12-09T09:15:57.189029+01:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "basePath": "03-argocd-apps-sync",
+      "name": "argocd-apps-sync",
+      "startTime": "2025-12-09T09:15:55.212562+01:00",
+      "endTime": "2025-12-09T09:15:55.565945+01:00",
+      "steps": [
+        {
+          "name": "check-platform-root-app",
+          "startTime": "2025-12-09T09:15:55.219886+01:00",
+          "endTime": "2025-12-09T09:15:55.279744+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.219907+01:00",
+              "endTime": "2025-12-09T09:15:55.279735+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-argoconfig-app",
+          "startTime": "2025-12-09T09:15:55.279751+01:00",
+          "endTime": "2025-12-09T09:15:55.336502+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.279762+01:00",
+              "endTime": "2025-12-09T09:15:55.336491+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-backstage-app",
+          "startTime": "2025-12-09T09:15:55.336506+01:00",
+          "endTime": "2025-12-09T09:15:55.393024+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.336516+01:00",
+              "endTime": "2025-12-09T09:15:55.393011+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-ingress-nginx-app",
+          "startTime": "2025-12-09T09:15:55.393028+01:00",
+          "endTime": "2025-12-09T09:15:55.449647+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.393045+01:00",
+              "endTime": "2025-12-09T09:15:55.449638+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-argo-rollouts-app",
+          "startTime": "2025-12-09T09:15:55.449649+01:00",
+          "endTime": "2025-12-09T09:15:55.508131+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.44966+01:00",
+              "endTime": "2025-12-09T09:15:55.508121+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-opentelemetry-app",
+          "startTime": "2025-12-09T09:15:55.508135+01:00",
+          "endTime": "2025-12-09T09:15:55.565944+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.508152+01:00",
+              "endTime": "2025-12-09T09:15:55.565934+01:00"
+            }
+          ]
+        },
+        {
+          "name": "@cleanup",
+          "startTime": "2025-12-09T09:15:55.565964+01:00",
+          "endTime": "2025-12-09T09:16:00.671153+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "delete",
+              "startTime": "2025-12-09T09:15:55.565964+01:00",
+              "endTime": "2025-12-09T09:16:00.671152+01:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "basePath": "04-backstage-health",
+      "name": "backstage-health",
+      "startTime": "2025-12-09T09:15:55.676214+01:00",
+      "endTime": "2025-12-09T09:15:55.856391+01:00",
+      "steps": [
+        {
+          "name": "check-backstage-deployment",
+          "startTime": "2025-12-09T09:15:55.683077+01:00",
+          "endTime": "2025-12-09T09:15:55.737817+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.683092+01:00",
+              "endTime": "2025-12-09T09:15:55.737808+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-backstage-service",
+          "startTime": "2025-12-09T09:15:55.737819+01:00",
+          "endTime": "2025-12-09T09:15:55.79167+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.737829+01:00",
+              "endTime": "2025-12-09T09:15:55.791661+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-backstage-pods-running",
+          "startTime": "2025-12-09T09:15:55.791673+01:00",
+          "endTime": "2025-12-09T09:15:55.856389+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "script",
+              "startTime": "2025-12-09T09:15:55.791683+01:00",
+              "endTime": "2025-12-09T09:15:55.85638+01:00"
+            }
+          ]
+        },
+        {
+          "name": "@cleanup",
+          "startTime": "2025-12-09T09:15:55.856408+01:00",
+          "endTime": "2025-12-09T09:16:00.961265+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "delete",
+              "startTime": "2025-12-09T09:15:55.856411+01:00",
+              "endTime": "2025-12-09T09:16:00.961264+01:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "basePath": "06-secrets-present",
+      "name": "secrets-present",
+      "startTime": "2025-12-09T09:15:55.716071+01:00",
+      "endTime": "2025-12-09T09:15:55.890126+01:00",
+      "steps": [
+        {
+          "name": "check-argocd-admin-secret",
+          "startTime": "2025-12-09T09:15:55.721544+01:00",
+          "endTime": "2025-12-09T09:15:55.775234+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.721558+01:00",
+              "endTime": "2025-12-09T09:15:55.775226+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-backstage-secrets",
+          "startTime": "2025-12-09T09:15:55.775236+01:00",
+          "endTime": "2025-12-09T09:15:55.83523+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "assert",
+              "startTime": "2025-12-09T09:15:55.775246+01:00",
+              "endTime": "2025-12-09T09:15:55.835213+01:00"
+            }
+          ]
+        },
+        {
+          "name": "check-backstage-secret-has-data",
+          "startTime": "2025-12-09T09:15:55.835235+01:00",
+          "endTime": "2025-12-09T09:15:55.890123+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "script",
+              "startTime": "2025-12-09T09:15:55.83526+01:00",
+              "endTime": "2025-12-09T09:15:55.89011+01:00"
+            }
+          ]
+        },
+        {
+          "name": "@cleanup",
+          "startTime": "2025-12-09T09:15:55.890137+01:00",
+          "endTime": "2025-12-09T09:16:01.094793+01:00",
+          "operations": [
+            {
+              "name": "operation 1",
+              "type": "delete",
+              "startTime": "2025-12-09T09:15:55.890138+01:00",
+              "endTime": "2025-12-09T09:16:01.094792+01:00"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

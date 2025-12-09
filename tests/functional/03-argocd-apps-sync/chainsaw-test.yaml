@@ -1,0 +1,94 @@
+# Chainsaw Test: ArgoCD Applications Sync Status
+# Verifies core ArgoCD applications are synced and healthy
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: argocd-apps-sync
+spec:
+  description: Verify ArgoCD applications are synced
+  timeouts:
+    assert: 5m
+  steps:
+    - name: check-platform-root-app
+      description: Platform root application must be synced
+      try:
+        - assert:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: platform
+                namespace: argocd
+              status:
+                sync:
+                  status: Synced
+
+    - name: check-argoconfig-app
+      description: ArgoConfig application must be synced
+      try:
+        - assert:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: argoconfig
+                namespace: argocd
+              status:
+                sync:
+                  status: Synced
+
+    - name: check-backstage-app
+      description: Backstage application must be synced
+      try:
+        - assert:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: backstage
+                namespace: argocd
+              status:
+                sync:
+                  status: Synced
+
+    - name: check-ingress-nginx-app
+      description: Ingress-nginx application must be synced
+      try:
+        - assert:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: ingress-nginx
+                namespace: argocd
+              status:
+                sync:
+                  status: Synced
+
+    - name: check-argo-rollouts-app
+      description: Argo-rollouts application must be synced
+      try:
+        - assert:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: argo-rollouts
+                namespace: argocd
+              status:
+                sync:
+                  status: Synced
+
+    - name: check-opentelemetry-app
+      description: OpenTelemetry application must be synced
+      try:
+        - assert:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: opentelemetry
+                namespace: argocd
+              status:
+                sync:
+                  status: Synced

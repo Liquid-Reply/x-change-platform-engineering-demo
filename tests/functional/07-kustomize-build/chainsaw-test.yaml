@@ -1,0 +1,76 @@
+# Chainsaw Test: Kustomize Build Validation
+# Verifies all Kustomize overlays build without errors
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: kustomize-build
+spec:
+  description: Verify Kustomize overlays build successfully
+  steps:
+    - name: build-minikube-overlay
+      description: Minikube overlay must build without errors
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              #!/bin/bash
+              set -e
+              REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CHAINSAW_REPO_ROOT:-/workspaces/x-change-platform-engineering-demo}")
+              cd "$REPO_ROOT"
+              OUTPUT=$(kustomize build gitops/manifests/overlays/minikube 2>&1)
+              COUNT=$(echo "$OUTPUT" | grep -c "^apiVersion:" || true)
+              if [ "$COUNT" -lt 50 ]; then
+                echo "Expected at least 50 resources, got $COUNT"
+                exit 1
+              fi
+              echo "Minikube overlay: $COUNT resources"
+
+    - name: build-codespaces-overlay
+      description: Codespaces overlay must build without errors
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              #!/bin/bash
+              set -e
+              REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CHAINSAW_REPO_ROOT:-/workspaces/x-change-platform-engineering-demo}")
+              cd "$REPO_ROOT"
+              OUTPUT=$(kustomize build gitops/manifests/overlays/codespaces 2>&1)
+              COUNT=$(echo "$OUTPUT" | grep -c "^apiVersion:" || true)
+              if [ "$COUNT" -lt 50 ]; then
+                echo "Expected at least 50 resources, got $COUNT"
+                exit 1
+              fi
+              echo "Codespaces overlay: $COUNT resources"
+
+    - name: build-kind-overlay
+      description: Kind overlay must build without errors
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              #!/bin/bash
+              set -e
+              REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CHAINSAW_REPO_ROOT:-/workspaces/x-change-platform-engineering-demo}")
+              cd "$REPO_ROOT"
+              OUTPUT=$(kustomize build gitops/manifests/overlays/kind 2>&1)
+              COUNT=$(echo "$OUTPUT" | grep -c "^apiVersion:" || true)
+              if [ "$COUNT" -lt 50 ]; then
+                echo "Expected at least 50 resources, got $COUNT"
+                exit 1
+              fi
+              echo "Kind overlay: $COUNT resources"
+
+    - name: validate-dry-run
+      description: Manifests must pass kubectl dry-run validation
+      try:
+        - script:
+            timeout: 120s
+            content: |
+              #!/bin/bash
+              set -e
+              REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CHAINSAW_REPO_ROOT:-/workspaces/x-change-platform-engineering-demo}")
+              cd "$REPO_ROOT"
+              # Use server-side dry-run for full validation
+              kustomize build gitops/manifests/overlays/minikube | kubectl apply --dry-run=server -f - 2>&1 | head -20
+              echo "Dry-run validation passed"

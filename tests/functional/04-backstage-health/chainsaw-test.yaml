@@ -1,0 +1,51 @@
+# Chainsaw Test: Backstage Health
+# Verifies Backstage deployment is running and accessible
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: backstage-health
+spec:
+  description: Verify Backstage deployment is healthy
+  steps:
+    - name: check-backstage-deployment
+      description: Backstage deployment must be available
+      try:
+        - assert:
+            resource:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: backstage
+                namespace: backstage
+              status:
+                (conditions[?type == 'Available']):
+                  - status: "True"
+
+    - name: check-backstage-service
+      description: Backstage service must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: backstage
+                namespace: backstage
+              spec:
+                ports:
+                  - port: 30105
+
+    - name: check-backstage-pods-running
+      description: Backstage pods must be running
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              #!/bin/bash
+              set -e
+              READY=$(kubectl get pods -n backstage -l app=backstage -o jsonpath='{.items[0].status.phase}')
+              if [ "$READY" != "Running" ]; then
+                echo "Backstage pod not running: $READY"
+                exit 1
+              fi
+              echo "Backstage pod is running"

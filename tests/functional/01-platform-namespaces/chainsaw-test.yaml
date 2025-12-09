@@ -1,0 +1,58 @@
+# Chainsaw Test: Platform Namespaces
+# Verifies all required platform namespaces exist
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: platform-namespaces
+spec:
+  description: Verify all required platform namespaces exist
+  steps:
+    - name: check-argocd-namespace
+      description: ArgoCD namespace must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: argocd
+
+    - name: check-backstage-namespace
+      description: Backstage namespace must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: backstage
+
+    - name: check-ingress-nginx-namespace
+      description: Ingress-nginx namespace must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: ingress-nginx
+
+    - name: check-argo-rollouts-namespace
+      description: Argo-rollouts namespace must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: argo-rollouts
+
+    - name: check-opentelemetry-namespace
+      description: OpenTelemetry namespace must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: opentelemetry
