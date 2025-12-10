@@ -1,0 +1,11 @@
+# Placeholder secret for OpenTelemetry collector in non-Dynatrace environments
+# The collector will start but won't be able to export to Dynatrace (expected)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dt-details
+  namespace: opentelemetry
+type: Opaque
+stringData:
+  DT_URL: "http://localhost:14268"
+  DT_OTEL_ALL_INGEST_TOKEN: "placeholder-token-not-configured"

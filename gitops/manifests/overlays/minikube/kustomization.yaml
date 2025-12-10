@@ -8,6 +8,8 @@ kind: Kustomization
 
 resources:
   - ../../base
+  # Placeholder secret for OpenTelemetry (allows collector to start without DT)
+  - dt-details-placeholder.yaml
 
 # Uncomment to enable optional features:
 # - ../../platform/dynatrace
