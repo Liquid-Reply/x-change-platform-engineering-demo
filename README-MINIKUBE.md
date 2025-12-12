@@ -18,35 +18,29 @@ This guide explains how to run the Internal Development Platform demo locally us
 ### 1. Configure Secrets
 
 ```bash
-# Copy the example secrets file
-cp secrets-minikube.yaml.example secrets-minikube.yaml
+# Copy the template
+cp secrets/template.env secrets/minikube.env
 
 # Edit with your values
-# Required: github.token (for ArgoCD repository access)
-# Optional: dynatrace.* (for observability features)
+vim secrets/minikube.env
 ```
 
-**Minimal secrets-minikube.yaml** (without Dynatrace):
-```yaml
-github:
-  token: "ghp_your_github_personal_access_token"
+**Minimal secrets/minikube.env** (without Dynatrace):
+```bash
+GITHUB_TOKEN=ghp_your_github_personal_access_token
 ```
 
-### 2. Run the Installer
+### 2. Run Bootstrap
 
 ```bash
-# Full installation (with Dynatrace)
-python3 minikube_installer.py
-
-# Without Dynatrace (minimal setup)
-python3 minikube_installer.py --skip-dynatrace
+./bootstrap.sh minikube
 ```
 
-The installer will:
+The bootstrap will:
 - Start/configure minikube cluster
-- Enable required addons (ingress, metrics-server)
-- Deploy ArgoCD and platform components
-- Run validation checkpoints
+- Install ArgoCD and platform components
+- Create Kubernetes secrets
+- Optionally set up Dynatrace (if credentials provided)
 
 ### 3. Access Services
 
@@ -65,8 +59,8 @@ minikube service backstage -n backstage --url
 ## Command Reference
 
 ```bash
-# Start installer
-python3 minikube_installer.py [--skip-dynatrace] [--profile <name>]
+# Bootstrap the platform
+./bootstrap.sh minikube
 
 # Check cluster status
 minikube status
@@ -146,8 +140,7 @@ kubectl -n argocd patch application <app-name> -p '{"operation":{"initiatedBy":{
 ### Reset everything
 ```bash
 minikube delete
-rm -f secrets-minikube.yaml  # Keep your secrets safe elsewhere
-python3 minikube_installer.py --skip-dynatrace
+./bootstrap.sh minikube
 ```
 
 ## Differences from Codespaces
@@ -156,28 +149,24 @@ python3 minikube_installer.py --skip-dynatrace
 |--------|------------|----------|
 | Cluster | Kind | Minikube |
 | URLs | `*.app.github.dev` | `localhost:port` |
-| Secrets | Environment variables | `secrets-minikube.yaml` |
+| Secrets | Environment variables | `secrets/minikube.env` |
 | Dynatrace | Required | Optional |
 | Keptn | Enabled | Disabled by default |
 
-## File Structure (New)
+## File Structure
 
 ```
-├── minikube_installer.py      # Entry point for minikube
-├── secrets-minikube.yaml.example
-├── environments/              # Environment abstraction
-│   ├── base.py               # Abstract base class
-│   ├── minikube.py           # Minikube implementation
-│   └── codespaces.py         # Codespaces implementation
+├── bootstrap.sh               # Main entry point
 ├── config/
+│   ├── minikube.env          # Environment config (non-secret)
 │   └── profiles/             # Environment profiles
-│       ├── minikube.yaml
-│       └── codespaces.yaml
-├── secrets/                   # Secrets management
-│   └── manager.py
-└── validation/                # Installation validation
-    ├── checkpoints.py
-    └── runner.py
+│       └── minikube.yaml
+├── secrets/
+│   ├── template.env          # Template (copy to minikube.env)
+│   └── minikube.env          # Your secrets (gitignored)
+├── scripts/
+│   └── dynatrace.py          # DT token generation
+└── gitops/                    # ArgoCD manifests
 ```
 
 ## Contributing

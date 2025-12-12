@@ -3,10 +3,8 @@ notes.txt
 __pycache__
 
 # Local secrets files (keep real secrets out of git)
-secrets-minikube.yaml
-secrets-*.yaml
-!secrets-*.yaml.example
-config/secrets-*.yaml
+secrets/*.env
+!secrets/template.env
 settings.json
 CLAUDE.md
 CLAUDE copy.md
@@ -15,10 +13,6 @@ AGENTS copy.md
 AGENTS.md
 .claude/mcp-servers.json
 .codex
-
-# Secrets directory (except README)
-secrets/*
-!secrets/README.md
 
 # Config env files are safe to commit (no secrets)
 !config/*.env

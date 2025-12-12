@@ -23,10 +23,7 @@ urls:
   use_nip_io: false      # Set to true to use $(minikube ip).nip.io for DNS
   # When false, uses localhost with NodePort access
 
-# Secrets configuration
-secrets:
-  source: local          # 'local' for secrets-minikube.yaml, 'eso' for External Secrets Operator
-  local_file: secrets-minikube.yaml
+# Secrets: loaded from secrets/minikube.env by bootstrap.sh
 
 # Component toggles
 # Set to false to disable components and save resources
@@ -44,6 +41,5 @@ components:
 # Dynatrace configuration (only used if dynatrace component is enabled)
 dynatrace:
   # Leave empty to skip Dynatrace integration
-  # Set via environment variables or secrets-minikube.yaml:
-  #   DT_ENV_NAME, DT_ENV, DT_RW_API_TOKEN
+  # Set DT_* variables in secrets/minikube.env
   skip_if_missing: true  # Don't fail if DT credentials missing

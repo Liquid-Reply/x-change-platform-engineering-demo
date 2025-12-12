@@ -24,14 +24,20 @@ error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
 # Validate environment
 [[ -f "${SCRIPT_DIR}/config/${ENV}.env" ]] || error "Unknown environment: ${ENV}. Available: minikube, codespaces, kind"
-[[ -f "${SCRIPT_DIR}/secrets/github-token" ]] || error "Missing secrets/github-token. See secrets/README.md"
+
+SECRETS_FILE="${SCRIPT_DIR}/secrets/${ENV}.env"
+[[ -f "${SECRETS_FILE}" ]] || error "Missing ${SECRETS_FILE}. Copy from secrets/template.env"
 
 log "=== IDP Platform Bootstrap: ${ENV} ==="
 
-# Load environment config
+# Load environment config and secrets
 set -a
 source "${SCRIPT_DIR}/config/${ENV}.env"
+source "${SECRETS_FILE}"
 set +a
+
+# Validate required secrets
+[[ -n "${GITHUB_TOKEN:-}" ]] || error "GITHUB_TOKEN not set in ${SECRETS_FILE}"
 
 # 1. Create/reset cluster
 log "Creating ${CLUSTER_TYPE} cluster..."
@@ -63,7 +69,6 @@ done
 
 # 3. Create GitHub token secret
 log "Creating GitHub token secret..."
-GITHUB_TOKEN=$(cat "${SCRIPT_DIR}/secrets/github-token")
 kubectl -n argocd create secret generic github-token \
   --from-literal=token="${GITHUB_TOKEN}" \
   --dry-run=client -o yaml | kubectl apply -f -
@@ -134,9 +139,11 @@ kubectl -n backstage create secret generic backstage-secrets \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # 9. Optional: Dynatrace setup
-if [[ -f "${SCRIPT_DIR}/secrets/dt-credentials.env" ]]; then
+if [[ -n "${DT_ENV_NAME:-}" ]] && [[ -n "${DT_RW_API_TOKEN:-}" ]]; then
   log "Setting up Dynatrace integration..."
   python3 "${SCRIPT_DIR}/scripts/dynatrace.py" --env "${ENV}" --create-tokens || warn "Dynatrace setup failed (optional)"
+else
+  log "Skipping Dynatrace setup (DT_ENV_NAME or DT_RW_API_TOKEN not set)"
 fi
 
 # 10. Wait for Backstage and restart

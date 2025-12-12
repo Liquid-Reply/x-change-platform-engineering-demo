@@ -6,6 +6,10 @@ Minimal Python for Dynatrace operations that cannot be done in shell:
 - API token creation (HTTP API)
 - Asset upload (OAuth flow)
 
+Credentials are loaded from:
+1. Environment variables (DT_ENV_NAME, DT_RW_API_TOKEN, etc.)
+2. Fallback: secrets/<env>.env file
+
 Usage:
     python3 scripts/dynatrace.py --env minikube --create-tokens
     python3 scripts/dynatrace.py --env minikube --upload-assets
@@ -20,17 +24,32 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 
 
-def load_credentials(creds_file="secrets/dt-credentials.env"):
-    """Load Dynatrace credentials from env file."""
-    creds = {}
-    if not os.path.exists(creds_file):
-        return creds
-    with open(creds_file) as f:
-        for line in f:
-            line = line.strip()
-            if '=' in line and not line.startswith('#'):
-                k, v = line.split('=', 1)
-                creds[k] = v
+def load_credentials(env="minikube"):
+    """Load Dynatrace credentials from environment or secrets file.
+
+    Priority: environment variables > secrets/<env>.env file
+    """
+    # DT credential keys we need
+    keys = [
+        "DT_ENV_NAME", "DT_ENV", "DT_RW_API_TOKEN",
+        "DT_OAUTH_CLIENT_ID", "DT_OAUTH_CLIENT_SECRET", "DT_OAUTH_ACCOUNT_URN"
+    ]
+
+    # First, try environment variables (set by bootstrap.sh)
+    creds = {k: os.environ.get(k, "") for k in keys}
+
+    # If missing required vars, try secrets file
+    if not creds.get("DT_RW_API_TOKEN") or not creds.get("DT_ENV_NAME"):
+        creds_file = f"secrets/{env}.env"
+        if os.path.exists(creds_file):
+            with open(creds_file) as f:
+                for line in f:
+                    line = line.strip()
+                    if '=' in line and not line.startswith('#'):
+                        k, v = line.split('=', 1)
+                        if k in keys and not creds.get(k):
+                            creds[k] = v
+
     return creds
 
 
@@ -124,10 +143,9 @@ def main():
     parser.add_argument("--env", default="minikube", help="Environment name")
     parser.add_argument("--create-tokens", action="store_true", help="Create API tokens")
     parser.add_argument("--upload-assets", action="store_true", help="Upload dashboards/notebooks")
-    parser.add_argument("--creds", default="secrets/dt-credentials.env", help="Credentials file")
     args = parser.parse_args()
 
-    creds = load_credentials(args.creds)
+    creds = load_credentials(args.env)
     if not creds.get("DT_RW_API_TOKEN") or not creds.get("DT_ENV_NAME"):
         print("No Dynatrace credentials found, skipping setup")
         return 0
