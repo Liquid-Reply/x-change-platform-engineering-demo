@@ -22,6 +22,7 @@ spec:
           repo: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"        
     container:
       image: dynatrace/dynatrace-configuration-as-code:latest
+      imagePullPolicy: IfNotPresent
       args: [
         "deploy",
         "/src/customer-apps/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}/monaco/manifest.yml",

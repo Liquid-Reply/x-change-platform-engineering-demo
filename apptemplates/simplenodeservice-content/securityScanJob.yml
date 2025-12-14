@@ -51,6 +51,7 @@ spec:
       containers:
         - name: kubeaudit
           image: shopify/kubeaudit:v0.11
+          imagePullPolicy: IfNotPresent
           args: ["all", "--exitcode", "0", "--namespace", "${{ values.projectName}}-${{ values.teamIdentifier }}-${{ values.releaseStage}}"]
           securityContext:
             allowPrivilegeEscalation: false

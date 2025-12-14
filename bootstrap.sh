@@ -22,6 +22,62 @@ log() { echo -e "${GREEN}[INFO]${NC} $1"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
+# Check if cluster exists
+cluster_exists() {
+  case "${CLUSTER_TYPE:-minikube}" in
+    minikube)
+      minikube status --profile "${CLUSTER_NAME:-idp}" &>/dev/null
+      ;;
+    kind)
+      kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME:-idp}$"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+# Prompt for existing installation
+prompt_existing_installation() {
+  echo ""
+  echo -e "${YELLOW}═══════════════════════════════════════════════════════════════${NC}"
+  echo -e "${YELLOW}  An existing '${CLUSTER_NAME}' cluster was found!${NC}"
+  echo -e "${YELLOW}═══════════════════════════════════════════════════════════════${NC}"
+  echo ""
+  echo "What would you like to do?"
+  echo ""
+  echo "  1) Delete and recreate  - Full reinstall (destroys existing cluster)"
+  echo "  2) Keep and refresh     - Keep cluster, re-apply configurations"
+  echo "  3) Keep and exit        - Exit without changes"
+  echo ""
+
+  while true; do
+    read -rp "Select option [1-3]: " choice
+    case "${choice}" in
+      1)
+        echo ""
+        log "Will delete existing cluster and perform full installation..."
+        INSTALL_MODE="full"
+        return 0
+        ;;
+      2)
+        echo ""
+        log "Will keep existing cluster and refresh configurations..."
+        INSTALL_MODE="refresh"
+        return 0
+        ;;
+      3)
+        echo ""
+        log "Exiting without changes."
+        exit 0
+        ;;
+      *)
+        echo "Invalid option. Please enter 1, 2, or 3."
+        ;;
+    esac
+  done
+}
+
 # Validate environment
 [[ -f "${SCRIPT_DIR}/config/${ENV}.env" ]] || error "Unknown environment: ${ENV}. Available: minikube, codespaces, kind"
 
@@ -39,27 +95,37 @@ set +a
 # Validate required secrets
 [[ -n "${GITHUB_TOKEN:-}" ]] || error "GITHUB_TOKEN not set in ${SECRETS_FILE}"
 
+# Check for existing installation and prompt user
+INSTALL_MODE="full"
+if cluster_exists; then
+  prompt_existing_installation
+fi
+
 # 1. Create/reset cluster
-log "Creating ${CLUSTER_TYPE} cluster..."
-case "${CLUSTER_TYPE}" in
-  minikube)
-    minikube delete --profile "${CLUSTER_NAME}" 2>/dev/null || true
-    minikube start --profile "${CLUSTER_NAME}" --cpus=4 --memory=8192 --driver=docker
-    minikube profile "${CLUSTER_NAME}"
-    kubectl label nodes "${CLUSTER_NAME}" ingress-ready=true --overwrite
-    ;;
-  kind)
-    kind delete cluster --name "${CLUSTER_NAME}" 2>/dev/null || true
-    if [[ -f "${SCRIPT_DIR}/.devcontainer/kind-cluster.yml" ]]; then
-      kind create cluster --name "${CLUSTER_NAME}" --config "${SCRIPT_DIR}/.devcontainer/kind-cluster.yml" --wait 5m
-    else
-      kind create cluster --name "${CLUSTER_NAME}" --wait 5m
-    fi
-    ;;
-  *)
-    error "Unsupported cluster type: ${CLUSTER_TYPE}"
-    ;;
-esac
+if [[ "${INSTALL_MODE}" == "full" ]]; then
+  log "Creating ${CLUSTER_TYPE} cluster..."
+  case "${CLUSTER_TYPE}" in
+    minikube)
+      minikube delete --profile "${CLUSTER_NAME}" 2>/dev/null || true
+      minikube start --profile "${CLUSTER_NAME}" --cpus=4 --memory=8192 --driver=docker
+      minikube profile "${CLUSTER_NAME}"
+      kubectl label nodes "${CLUSTER_NAME}" ingress-ready=true --overwrite
+      ;;
+    kind)
+      kind delete cluster --name "${CLUSTER_NAME}" 2>/dev/null || true
+      if [[ -f "${SCRIPT_DIR}/.devcontainer/kind-cluster.yml" ]]; then
+        kind create cluster --name "${CLUSTER_NAME}" --config "${SCRIPT_DIR}/.devcontainer/kind-cluster.yml" --wait 5m
+      else
+        kind create cluster --name "${CLUSTER_NAME}" --wait 5m
+      fi
+      ;;
+    *)
+      error "Unsupported cluster type: ${CLUSTER_TYPE}"
+      ;;
+  esac
+else
+  log "Keeping existing ${CLUSTER_TYPE} cluster '${CLUSTER_NAME}'..."
+fi
 
 # 2. Create namespaces
 log "Creating namespaces..."
@@ -76,6 +142,25 @@ kubectl -n argocd create secret generic github-token \
 # 4. Install ArgoCD
 log "Installing ArgoCD ${ARGOCD_VERSION}..."
 kubectl apply -n argocd -f "https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml"
+
+# Patch imagePullPolicy to IfNotPresent for faster startup (avoid re-pulling cached images)
+log "Patching ArgoCD deployments for faster image pulls..."
+for deploy in argocd-dex-server argocd-server argocd-repo-server argocd-applicationset-controller argocd-notifications-controller argocd-redis; do
+  kubectl patch deployment "$deploy" -n argocd --type=json -p='[
+    {"op": "replace", "path": "/spec/template/spec/containers/0/imagePullPolicy", "value": "IfNotPresent"}
+  ]' 2>/dev/null || true
+done
+# Patch dex-server init container separately
+kubectl patch deployment argocd-dex-server -n argocd --type=json -p='[
+  {"op": "replace", "path": "/spec/template/spec/initContainers/0/imagePullPolicy", "value": "IfNotPresent"}
+]' 2>/dev/null || true
+
+# Patch ArgoCD application-controller StatefulSet
+log "Patching ArgoCD StatefulSet for faster image pulls..."
+kubectl patch statefulset argocd-application-controller -n argocd --type=json -p='[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/imagePullPolicy", "value": "IfNotPresent"}
+]' 2>/dev/null || true
+
 kubectl wait --for=condition=Available deployment -n argocd --all --timeout="${TIMEOUT}"
 
 # 5. Configure ArgoCD

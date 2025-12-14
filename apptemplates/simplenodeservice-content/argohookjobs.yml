@@ -13,6 +13,7 @@ spec:
       containers:
       - name: bizevent-pusher
         image: ghcr.io/dynatrace-oss/bizevent-pusher:v1.1.1
+        imagePullPolicy: IfNotPresent
         args: [
           "--debug", "true",
           "--tenant",
@@ -71,6 +72,7 @@ spec:
       containers:
       - name: bizevent-pusher
         image: ghcr.io/dynatrace-oss/bizevent-pusher:v1.1.1
+        imagePullPolicy: IfNotPresent
         args: [
           "--debug", "true",
           "--tenant",
@@ -129,6 +131,7 @@ spec:
       containers:
       - name: bizevent-pusher
         image: ghcr.io/dynatrace-oss/bizevent-pusher:v1.1.1
+        imagePullPolicy: IfNotPresent
         args: [
           "--debug", "true",
           "--tenant",
@@ -187,6 +190,7 @@ spec:
       containers:
       - name: bizevent-pusher
         image: ghcr.io/dynatrace-oss/bizevent-pusher:v1.1.1
+        imagePullPolicy: IfNotPresent
         args: [
           "--debug", "true",
           "--tenant",

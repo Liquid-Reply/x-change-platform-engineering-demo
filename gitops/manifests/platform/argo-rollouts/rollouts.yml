@@ -15468,7 +15468,7 @@ spec:
     spec:
       containers:
       - image: quay.io/argoproj/argo-rollouts:v1.6.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
           httpGet:

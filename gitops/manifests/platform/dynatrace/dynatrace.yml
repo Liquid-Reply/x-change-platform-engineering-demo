@@ -5131,7 +5131,7 @@ spec:
             - operator
           # Replace this with the built image name
           image: docker.io/dynatrace/dynatrace-operator:v0.15.0
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: POD_NAMESPACE
               valueFrom:
@@ -5299,7 +5299,7 @@ spec:
             # OLM mounts the certificates here, so we reuse it for simplicity
             - --certs-dir=/tmp/k8s-webhook-server/serving-certs/
           image: docker.io/dynatrace/dynatrace-operator:v0.15.0
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: POD_NAMESPACE
               valueFrom:
@@ -5760,7 +5760,7 @@ spec:
       initContainers:
       - name: csi-init
         image: docker.io/dynatrace/dynatrace-operator:v0.15.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         args:
         - csi-init
         terminationMessagePath: /dev/termination-log
@@ -5792,7 +5792,7 @@ spec:
         # - Needs access to a dedicated folder on the node to persist data, needs to read/write to it.
       - name: server
         image: docker.io/dynatrace/dynatrace-operator:v0.15.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         args:
         - csi-server
         - --endpoint=unix://csi/csi.sock
@@ -5864,7 +5864,7 @@ spec:
           mountPath: /tmp
       - name: provisioner
         image: docker.io/dynatrace/dynatrace-operator:v0.15.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         args:
           - csi-provisioner
           - --health-probe-bind-address=:10090
@@ -5920,7 +5920,7 @@ spec:
         # - Needs access to the registration socket, needs to read/write to it, needs root permissions to do so.
       - name: registrar
         image: docker.io/dynatrace/dynatrace-operator:v0.15.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         env:
         - name: DRIVER_REG_SOCK_PATH
           value: /var/lib/kubelet/plugins/csi.oneagent.dynatrace.com/csi.sock
@@ -5956,7 +5956,7 @@ spec:
         # - Needs access to the csi socket, needs to read/write to it, needs root permissions to do so.
       - name: liveness-probe
         image: docker.io/dynatrace/dynatrace-operator:v0.15.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         args:
         - --csi-address=/csi/csi.sock
         - --health-port=9898
