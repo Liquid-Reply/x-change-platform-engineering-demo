@@ -123,6 +123,33 @@ if [[ "${INSTALL_MODE}" == "full" ]]; then
       error "Unsupported cluster type: ${CLUSTER_TYPE}"
       ;;
   esac
+
+  # Preload images into cluster for faster deployments
+  if [[ "${CLUSTER_TYPE}" == "minikube" ]]; then
+    log "Preloading container images into minikube cache..."
+
+    # Define images to preload
+    declare -a IMAGES=(
+      # Backstage and application templates
+      "ghcr.io/katharinasick/backstage-playground:1.2.4"
+      "ghcr.io/dynatrace-oss/bizevent-pusher:v1.1.1"
+      # ArgoCD core images
+      "quay.io/argoproj/argocd:v2.12.2"
+      "ghcr.io/dexidp/dex:v2.38.0"
+      "redis:7.0.15-alpine"
+    )
+
+    # Pull images to host Docker daemon first (if not already present)
+    for image in "${IMAGES[@]}"; do
+      docker pull "${image}" 2>/dev/null || warn "Failed to pull ${image}"
+    done
+
+    # Load images into minikube
+    for image in "${IMAGES[@]}"; do
+      minikube image load "${image}" --profile "${CLUSTER_NAME}" 2>/dev/null || warn "Failed to load ${image}"
+      log "Loaded ${image} into minikube cache..."
+    done
+  fi
 else
   log "Keeping existing ${CLUSTER_TYPE} cluster '${CLUSTER_NAME}'..."
 fi
@@ -204,6 +231,18 @@ kubectl config set-context --current --namespace=default
 
 # 8. Create Backstage secrets
 log "Creating Backstage secrets..."
+
+# Set Dynatrace URLs with placeholders if DT_ENV_NAME is not configured
+if [[ -n "${DT_ENV_NAME:-}" ]]; then
+  DT_TENANT_LIVE_URL="https://${DT_ENV_NAME}.${DT_ENV:-live}.dynatrace.com"
+  DT_TENANT_APPS_URL="https://${DT_ENV_NAME}.apps.dynatrace.com"
+  DT_SSO_TOKEN_URL_VALUE="https://sso.dynatrace.com/sso/oauth2/token"
+else
+  DT_TENANT_LIVE_URL="https://placeholder.live.dynatrace.com"
+  DT_TENANT_APPS_URL="https://placeholder.apps.dynatrace.com"
+  DT_SSO_TOKEN_URL_VALUE="https://sso.dynatrace.com/sso/oauth2/token"
+fi
+
 kubectl -n backstage create secret generic backstage-secrets \
   --from-literal=BASE_DOMAIN="${BASE_DOMAIN}" \
   --from-literal=BACKSTAGE_PORT_NUMBER="${BACKSTAGE_PORT}" \
@@ -214,9 +253,9 @@ kubectl -n backstage create secret generic backstage-secrets \
   --from-literal=GITHUB_REPO="$(echo "${REPO_URL}" | sed -E 's|https://github.com/[^/]+/([^/.]+).*|\1|')" \
   --from-literal=GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN="${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-}" \
   --from-literal=DT_TENANT_NAME="${DT_ENV_NAME:-placeholder}" \
-  --from-literal=DT_TENANT_LIVE="${DT_ENV_NAME:+https://${DT_ENV_NAME}.${DT_ENV:-live}.dynatrace.com}" \
-  --from-literal=DT_TENANT_APPS="${DT_ENV_NAME:+https://${DT_ENV_NAME}.apps.dynatrace.com}" \
-  --from-literal=DT_SSO_TOKEN_URL="${DT_ENV_NAME:+https://sso.dynatrace.com/sso/oauth2/token}" \
+  --from-literal=DT_TENANT_LIVE="${DT_TENANT_LIVE_URL}" \
+  --from-literal=DT_TENANT_APPS="${DT_TENANT_APPS_URL}" \
+  --from-literal=DT_SSO_TOKEN_URL="${DT_SSO_TOKEN_URL_VALUE}" \
   --from-literal=DT_OAUTH_CLIENT_ID="${DT_OAUTH_CLIENT_ID:-placeholder}" \
   --from-literal=DT_OAUTH_CLIENT_SECRET="${DT_OAUTH_CLIENT_SECRET:-placeholder}" \
   --from-literal=DT_OAUTH_ACCOUNT_URN="${DT_OAUTH_ACCOUNT_URN:-placeholder}" \
@@ -238,6 +277,12 @@ for i in {1..120}; do
   echo "Waiting for backstage deployment... ($i/120)"
   sleep 2
 done
+
+# Patch Backstage deployment for faster image pulls
+log "Patching Backstage deployment for faster image pulls..."
+kubectl patch deployment backstage -n backstage --type=json -p='[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/imagePullPolicy", "value": "IfNotPresent"}
+]' 2>/dev/null || true
 
 kubectl -n backstage rollout restart deployment/backstage 2>/dev/null || true
 kubectl -n backstage rollout status deployment/backstage --timeout="${TIMEOUT}" 2>/dev/null || true
