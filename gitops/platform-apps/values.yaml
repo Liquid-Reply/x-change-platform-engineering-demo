@@ -1,0 +1,165 @@
+# Platform Apps Helm Chart - Default Values
+#
+# This chart manages all 11 ArgoCD Applications for the x-change platform.
+# Environment-specific overrides go in values-{env}.yaml files.
+
+global:
+  repoURL: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+  targetRevision: "main"
+  project: "default"
+  server: "https://kubernetes.default.svc"
+
+applications:
+  # =============================================================================
+  # Pattern A: Local path with spec.source (singular)
+  # =============================================================================
+
+  namespaces:
+    enabled: true
+    syncWave: "1"
+    sourceType: "local"
+    path: "gitops/manifests/platform/namespaces"
+    namespace: "argocd"
+
+  argoconfig:
+    enabled: true
+    syncWave: "1"
+    sourceType: "local"
+    path: "gitops/manifests/platform/argoconfig"
+    namespace: "argocd"
+
+  dynatrace:
+    enabled: true
+    syncWave: "2"
+    sourceType: "local"
+    path: "gitops/manifests/platform/dynatrace"
+    namespace: "dynatrace"
+
+  ingress-nginx:
+    enabled: true
+    syncWave: "3"
+    sourceType: "local"
+    path: "gitops/manifests/platform/ingress-nginx"
+    namespace: "ingress-nginx"
+
+  argo-rollouts:
+    enabled: true
+    syncWave: "3"
+    sourceType: "local"
+    path: "gitops/manifests/platform/argo-rollouts"
+    namespace: "argo-rollouts"
+
+  backstage:
+    enabled: true
+    syncWave: "6"
+    sourceType: "local"
+    path: "gitops/manifests/platform/backstage"
+    namespace: "backstage"
+
+  # =============================================================================
+  # Pattern A2: Local path with spec.sources (array with single element)
+  # =============================================================================
+
+  kubeaudit:
+    enabled: true
+    syncWave: "4"
+    sourceType: "localMulti"
+    path: "gitops/manifests/platform/kubeaudit"
+    namespace: "kubeaudit"
+
+  # =============================================================================
+  # Pattern B: External Helm chart only
+  # =============================================================================
+
+  cert-manager:
+    enabled: true
+    syncWave: "3"
+    sourceType: "helm"
+    helmRepo: "https://charts.jetstack.io"
+    chart: "cert-manager"
+    chartVersion: "v1.14.3"
+    namespace: "cert-manager"
+    helmValues: |
+      installCRDs: true
+
+  workflows:
+    enabled: true
+    syncWave: "3"
+    sourceType: "helm"
+    helmRepo: "https://argoproj.github.io/argo-helm"
+    chart: "argo-workflows"
+    chartVersion: "0.36.1"
+    namespace: "argocd"
+    helmValues: |
+      server:
+        authMode: "server"
+
+  openfeature:
+    enabled: true
+    syncWave: "4"
+    sourceType: "helm"
+    helmRepo: "https://open-feature.github.io/open-feature-operator"
+    chart: "open-feature-operator"
+    chartVersion: "v0.5.4"
+    namespace: "open-feature-operator-system"
+    # No helmValues - uses defaults
+
+  # =============================================================================
+  # Pattern C: Multi-source (local path + external Helm chart)
+  # =============================================================================
+
+  opentelemetry:
+    enabled: true
+    syncWave: "3"
+    sourceType: "multiSource"
+    path: "gitops/manifests/platform/opentelemetry"
+    helmRepo: "https://open-telemetry.github.io/opentelemetry-helm-charts"
+    chart: "opentelemetry-collector"
+    chartVersion: "0.71.0"
+    namespace: "opentelemetry"
+    helmValues: |
+      extraEnvs:
+        - name: DT_URL
+          valueFrom:
+            secretKeyRef:
+              name: dt-details
+              key: DT_URL
+        - name: DT_OTEL_ALL_INGEST_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: dt-details
+              key: DT_OTEL_ALL_INGEST_TOKEN
+      mode: daemonset
+      presets:
+        logsCollection:
+          enabled: true
+          includeCollectorLogs: true
+        kubernetesAttributes:
+          enabled: true
+        kubeletMetrics:
+          enabled: true
+      config:
+        receivers:
+          otlp:
+            protocols:
+              grpc:
+                endpoint: "0.0.0.0:4317"
+              http:
+                endpoint: "0.0.0.0:4318"
+        exporters:
+          otlphttp:
+            endpoint: "$DT_URL/api/v2/otlp"
+            headers:
+              Authorization: "Api-Token $DT_OTEL_ALL_INGEST_TOKEN"
+        service:
+          pipelines:
+            traces:
+              receivers: [otlp]
+              processors: []
+              exporters: [otlphttp]
+            metrics:
+              receivers: [otlp]
+              processors: []
+              exporters: [otlphttp]
+            logs:
+             exporters: [otlphttp]

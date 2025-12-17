@@ -1,0 +1,8 @@
+# Kind cluster environment overrides
+#
+# This file contains environment-specific values for Kind deployments.
+# Only values that differ from values.yaml need to be specified here.
+
+global:
+  # Kind uses main branch
+  targetRevision: "main"

@@ -1,0 +1,58 @@
+{{- range $name, $app := .Values.applications }}
+{{- if $app.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $name }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.syncWave | quote }}
+  labels:
+    {{- include "platform-apps.labels" $ | nindent 4 }}
+spec:
+  {{- if eq $app.sourceType "local" }}
+  {{/* Pattern A: Single source pointing to local path */}}
+  source:
+    repoURL: {{ $.Values.global.repoURL | quote }}
+    targetRevision: {{ $.Values.global.targetRevision }}
+    path: {{ $app.path | quote }}
+  {{- else if eq $app.sourceType "localMulti" }}
+  {{/* Pattern A2: Sources array with single local path */}}
+  sources:
+    - repoURL: {{ $.Values.global.repoURL | quote }}
+      targetRevision: {{ $.Values.global.targetRevision }}
+      path: {{ $app.path | quote }}
+  {{- else if eq $app.sourceType "helm" }}
+  {{/* Pattern B: External Helm chart only */}}
+  sources:
+    - repoURL: {{ $app.helmRepo | quote }}
+      targetRevision: {{ $app.chartVersion }}
+      chart: {{ $app.chart }}
+      {{- if $app.helmValues }}
+      helm:
+        values: |
+{{ $app.helmValues | indent 10 }}
+      {{- end }}
+  {{- else if eq $app.sourceType "multiSource" }}
+  {{/* Pattern C: Local path + external Helm chart */}}
+  sources:
+    - repoURL: {{ $.Values.global.repoURL | quote }}
+      targetRevision: {{ $.Values.global.targetRevision }}
+      path: {{ $app.path | quote }}
+    - repoURL: {{ $app.helmRepo | quote }}
+      targetRevision: {{ $app.chartVersion }}
+      chart: {{ $app.chart }}
+      {{- if $app.helmValues }}
+      helm:
+        values: |
+{{ $app.helmValues | indent 10 }}
+      {{- end }}
+  {{- end }}
+  destination:
+    namespace: {{ $app.namespace }}
+    server: {{ $.Values.global.server | quote }}
+  project: {{ $.Values.global.project }}
+  {{- include "platform-apps.syncPolicy" $ | nindent 2 }}
+{{- end }}
+{{- end }}

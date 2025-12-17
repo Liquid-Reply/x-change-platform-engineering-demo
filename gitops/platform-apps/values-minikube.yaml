@@ -1,0 +1,8 @@
+# Minikube environment overrides
+#
+# This file contains environment-specific values for minikube deployments.
+# Only values that differ from values.yaml need to be specified here.
+
+global:
+  # Use the feature branch for minikube development
+  targetRevision: "gh_codespace2k8s_opus"

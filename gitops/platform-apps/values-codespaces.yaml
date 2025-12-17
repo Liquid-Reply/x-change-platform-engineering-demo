@@ -1,0 +1,8 @@
+# GitHub Codespaces environment overrides
+#
+# This file contains environment-specific values for Codespaces deployments.
+# Only values that differ from values.yaml need to be specified here.
+
+global:
+  # Codespaces uses main branch
+  targetRevision: "main"
