@@ -5,4 +5,4 @@
 
 global:
   # Use the feature branch for minikube development
-  targetRevision: "gh_codespace2k8s_opus"
+  targetRevision: "gh_opus_kostumize2helm"

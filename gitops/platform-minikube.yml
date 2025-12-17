@@ -9,7 +9,7 @@ spec:
   source:
     path: "gitops/platform-apps"
     repoURL: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
-    targetRevision: gh_codespace2k8s_opus
+    targetRevision: gh_opus_kostumize2helm
     helm:
       valueFiles:
         - values-minikube.yaml
