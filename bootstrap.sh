@@ -149,6 +149,31 @@ if [[ "${INSTALL_MODE}" == "full" ]]; then
       minikube image load "${image}" --profile "${CLUSTER_NAME}" 2>/dev/null || warn "Failed to load ${image}"
       log "Loaded ${image} into minikube cache..."
     done
+
+  elif [[ "${CLUSTER_TYPE}" == "kind" ]]; then
+    log "Preloading container images into Kind cluster..."
+
+    # Define images to preload (same as minikube)
+    declare -a IMAGES=(
+      # Backstage and application templates
+      "ghcr.io/katharinasick/backstage-playground:1.2.4"
+      "ghcr.io/dynatrace-oss/bizevent-pusher:v1.1.1"
+      # ArgoCD core images
+      "quay.io/argoproj/argocd:v2.12.2"
+      "ghcr.io/dexidp/dex:v2.38.0"
+      "redis:7.0.15-alpine"
+    )
+
+    # Pull images to host Docker daemon first (if not already present)
+    for image in "${IMAGES[@]}"; do
+      docker pull "${image}" 2>/dev/null || warn "Failed to pull ${image}"
+    done
+
+    # Load images into Kind cluster
+    for image in "${IMAGES[@]}"; do
+      kind load docker-image "${image}" --name "${CLUSTER_NAME}" 2>/dev/null || warn "Failed to load ${image}"
+      log "Loaded ${image} into Kind cluster..."
+    done
   fi
 else
   log "Keeping existing ${CLUSTER_TYPE} cluster '${CLUSTER_NAME}'..."

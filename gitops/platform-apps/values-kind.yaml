@@ -4,5 +4,5 @@
 # Only values that differ from values.yaml need to be specified here.
 
 global:
-  # Kind uses main branch
-  targetRevision: "main"
+  # Use the feature branch for Kind development
+  targetRevision: "gh_opus_kostumize2helm"
