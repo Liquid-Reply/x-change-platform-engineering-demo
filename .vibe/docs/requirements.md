@@ -273,14 +273,41 @@ gitops/
   kustomization.yaml
 ```
 
-### Recommended Approach: Option B (Environment Abstraction)
+### Option D: Hybrid Approach - Helm for Applications, Kustomize for Manifests ✅ IMPLEMENTED
+
+**Approach**: Use Helm to manage ArgoCD Application definitions while preserving Kustomize for platform manifests.
+
+| Aspect | Details |
+|--------|---------|
+| **Changes** | New `gitops/platform-apps/` Helm chart; per-environment values files; single template for all 11 apps |
+| **Pros** | Declarative app management; easy environment additions (1 values file); preserves existing manifests |
+| **Cons** | Requires Helm knowledge; two templating systems (Helm for apps, Kustomize for manifests) |
+| **Effort** | Medium (1-2 days) |
+| **Risk** | Low - Helm is well-established, minimal changes to manifests |
+
+**Implemented Structure**:
+```
+gitops/
+  platform-apps/           # Helm chart for ArgoCD Applications
+    Chart.yaml
+    values.yaml            # All 11 apps with 4 source types
+    values-minikube.yaml   # Environment override
+    values-codespaces.yaml
+    values-kind.yaml
+    templates/
+      _helpers.tpl
+      applications.yaml    # Single template rendering all apps
+  manifests/platform/      # Unchanged Kustomize manifests
+```
+
+### Implemented Approach: Option D (Hybrid Helm)
 
 **Rationale**:
-1. Balances effort vs. stability
-2. Maintains existing code structure (familiar)
-3. Enables future environment additions (EKS, GKE, AKS)
-4. Preserves imperative token creation (required for Dynatrace API)
-5. Allows incremental migration toward Option C
+1. Replaced ~170 lines of JSON patches with ~55 lines of Helm template
+2. Adding new environments requires only 1 values file
+3. Single source of truth for all 11 platform applications
+4. Preserves existing Kustomize manifests (no migration risk)
+5. Supports 4 application source patterns: local, localMulti, helm, multiSource
 
 ---
 

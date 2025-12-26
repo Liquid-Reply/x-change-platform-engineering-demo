@@ -29,7 +29,12 @@ If you follow all instructions you should have your own IDP running in a GitHub 
 
 ## Prerequisites
 
-Note: This currently only works in GitHub-hosted devcontainers. It does not run locally (yet). We are [investigating support for this](https://github.com/dynatrace-perfclinics/platform-engineering-demo/issues/5) + [Gitpod support](https://github.com/dynatrace-perfclinics/platform-engineering-demo/issues/6). If you have experience in these areas, we ❤️ contributions so get involved!
+**Supported Environments:**
+- **GitHub Codespaces** - Fully automated setup
+- **Minikube** - Local Kubernetes development
+- **Kind** - Kubernetes in Docker
+
+See [Setup Instructions](#setup-instructions) for environment-specific guides.
 
 ### Grail enabled Dynatrace SaaS Tenant
 

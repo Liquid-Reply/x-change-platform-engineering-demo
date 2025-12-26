@@ -166,13 +166,37 @@ minikube delete
 │   └── minikube.env          # Your secrets (gitignored)
 ├── scripts/
 │   └── dynatrace.py          # DT token generation
-└── gitops/                    # ArgoCD manifests
+└── gitops/
+    ├── platform-minikube.yml  # Root ArgoCD Application (minikube)
+    ├── platform-apps/         # Helm chart for 11 ArgoCD Applications
+    │   ├── Chart.yaml
+    │   ├── values.yaml        # All applications (shared defaults)
+    │   ├── values-minikube.yaml   # Minikube overrides
+    │   └── templates/
+    │       └── applications.yaml
+    └── manifests/platform/    # Kubernetes manifests (Kustomize)
 ```
 
 ## Contributing
 
-The codebase now supports multiple environments via an abstraction layer. To add a new environment:
+### Adding a New Environment
 
-1. Create `environments/<name>.py` implementing `EnvironmentBase`
-2. Create `config/profiles/<name>.yaml`
-3. Update `EnvironmentFactory` detection logic
+The platform uses Helm to manage ArgoCD Applications, making it easy to add new environments:
+
+1. **Create values file**: `gitops/platform-apps/values-<env>.yaml`
+   ```yaml
+   global:
+     targetRevision: "main"  # or specific branch
+   ```
+
+2. **Create root application**: `gitops/platform-<env>.yml`
+   ```yaml
+   spec:
+     source:
+       path: "gitops/platform-apps"
+       helm:
+         valueFiles:
+           - values-<env>.yaml
+   ```
+
+3. **Optional**: Create `config/profiles/<env>.yaml` for bootstrap configuration

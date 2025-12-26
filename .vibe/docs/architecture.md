@@ -94,16 +94,21 @@ See [requirements.md](requirements.md) for detailed REQ-1 through REQ-8.
 
 ## 4. Solution Strategy
 
-### 4.1 Selected Approach: Option B - Environment Abstraction Layer
+### 4.1 Selected Approach: Hybrid Helm for Applications
 
-**Decision**: Implement an environment abstraction layer that detects and configures for Codespaces vs minikube.
+**Decision**: Use Helm to manage ArgoCD Application definitions while preserving Kustomize for platform manifests.
 
 **Rationale**:
-1. Balances implementation effort (3-5 days) with long-term maintainability
-2. Single codebase for multiple environments
-3. Enables future extension to EKS/GKE/AKS
-4. Preserves imperative token creation (required for Dynatrace API)
-5. Allows incremental migration toward full Kustomize (Option C)
+1. Replaced ~170 lines of Kustomize JSON patches with ~55 lines of Helm template
+2. Adding new environments requires only 1 values file (vs. full overlay directory)
+3. Single source of truth for all 11 platform applications in `gitops/platform-apps/`
+4. Preserves existing Kustomize manifests - no migration risk
+5. Supports 4 application source patterns: local, localMulti, helm, multiSource
+
+**Implementation**:
+- `gitops/platform-apps/` Helm chart manages all 11 ArgoCD Applications
+- Per-environment values files: `values-minikube.yaml`, `values-codespaces.yaml`, `values-kind.yaml`
+- Root applications (`platform-minikube.yml`, `platform-codespaces.yml`) use Helm source type
 
 ### 4.2 Key Architectural Decisions
 
@@ -119,57 +124,54 @@ See [requirements.md](requirements.md) for detailed REQ-1 through REQ-8.
 
 ## 5. Building Block View
 
-### 5.1 Level 1: System Overview
+### 5.1 Level 1: Platform Applications Helm Chart
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        minikube_installer.py                         │
+│                    gitops/platform-apps/ (Helm Chart)                │
 │  ┌────────────────┐  ┌────────────────┐  ┌────────────────────────┐ │
-│  │EnvironmentBase │  │ ConfigProfile  │  │   ClusterLifecycle     │ │
-│  │  (abstract)    │  │   (YAML)       │  │   (minikube CLI)       │ │
-│  └───────┬────────┘  └───────┬────────┘  └───────────┬────────────┘ │
-│          │                   │                       │              │
-│  ┌───────▼────────┐  ┌───────▼────────┐  ┌───────────▼────────────┐ │
-│  │ MinikubeEnv    │  │ ProfileLoader  │  │   SecretsManager       │ │
-│  │ CodespacesEnv  │  │                │  │   (local + ESO)        │ │
-│  └────────────────┘  └────────────────┘  └────────────────────────┘ │
+│  │  Chart.yaml    │  │  values.yaml   │  │  values-{env}.yaml     │ │
+│  │  (metadata)    │  │  (11 apps)     │  │  (env overrides)       │ │
+│  └────────────────┘  └───────┬────────┘  └───────────┬────────────┘ │
+│                              │                       │              │
+│                      ┌───────▼───────────────────────▼────────────┐ │
+│                      │        templates/applications.yaml          │ │
+│                      │     (renders all 11 ArgoCD Applications)    │ │
+│                      └─────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.2 Level 2: Environment Abstraction
+### 5.2 Level 2: Application Source Patterns
 
-| Building Block | Responsibility | Interface |
-|----------------|----------------|-----------|
-| `EnvironmentBase` | Abstract base class for environment detection | `detect()`, `get_base_url()`, `get_cluster_cmd()` |
-| `MinikubeEnv` | Minikube-specific configuration | `create_cluster()`, `get_minikube_ip()`, `enable_addons()` |
-| `CodespacesEnv` | Codespaces-specific configuration (existing) | `get_codespace_name()`, `get_port_domain()` |
-| `ProfileLoader` | Load YAML config profiles | `load_profile(env_name)` |
-| `SecretsManager` | Handle secrets for both environments | `create_secrets()`, `load_local_secrets()` |
+| Pattern | Source Type | Applications | Description |
+|---------|-------------|--------------|-------------|
+| A | `local` | namespaces, argoconfig, dynatrace, ingress-nginx, argo-rollouts, backstage | `spec.source` pointing to local Kustomize path |
+| A2 | `localMulti` | kubeaudit | `spec.sources[0]` for API consistency |
+| B | `helm` | cert-manager, workflows, openfeature | External Helm chart only |
+| C | `multiSource` | opentelemetry | Both local path and external Helm chart |
 
-### 5.3 Configuration Profiles
+### 5.3 Environment Values Structure
 
 ```yaml
-# config/profiles/minikube.yaml
-environment: minikube
-cluster:
-  driver: docker
-  cpus: 2
-  memory: 4096
-  addons:
-    - ingress
-    - metrics-server
-urls:
-  base_domain: "$(minikube ip).nip.io"  # or localhost
-  argocd: "http://localhost:30100"
-  backstage: "http://localhost:30105"
-  apps: "http://localhost:80"
-secrets:
-  source: local  # or "eso"
-  local_file: "secrets-minikube.yaml"
-components:
-  keptn: false
-  openfeature: false
-  kubeaudit_cronjobs: false
+# values.yaml - Default values for all environments
+global:
+  repoURL: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
+  targetRevision: "main"
+  project: "default"
+  server: "https://kubernetes.default.svc"
+
+applications:
+  namespaces:
+    enabled: true
+    syncWave: "1"
+    sourceType: "local"
+    path: "gitops/manifests/platform/namespaces"
+    namespace: "argocd"
+  # ... (11 applications total)
+
+# values-minikube.yaml - Environment override
+global:
+  targetRevision: "gh_opus_kostumize2helm"  # Feature branch
 ```
 
 ---
