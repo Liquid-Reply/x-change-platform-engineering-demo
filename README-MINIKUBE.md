@@ -9,7 +9,7 @@ This guide explains how to run the Internal Development Platform demo locally us
 | minikube | 1.30.0 | `minikube version` |
 | kubectl | 1.27.0 | `kubectl version --client` |
 | Docker | 20.10+ | `docker --version` |
-| Python | 3.8+ | `python3 --version` |
+| Helm | 3.0+ | `helm version` |
 
 **Hardware**: 4GB RAM, 2 CPUs minimum (8GB/4 CPUs recommended)
 
@@ -159,13 +159,11 @@ minikube delete
 ├── bootstrap.sh               # Main entry point
 ├── config/
 │   ├── minikube.env          # Environment config (non-secret)
-│   └── profiles/             # Environment profiles
-│       └── minikube.yaml
+│   └── profiles/
+│       └── minikube.yaml     # Minikube-specific settings
 ├── secrets/
 │   ├── template.env          # Template (copy to minikube.env)
 │   └── minikube.env          # Your secrets (gitignored)
-├── scripts/
-│   └── dynatrace.py          # DT token generation
 └── gitops/
     ├── platform-minikube.yml  # Root ArgoCD Application (minikube)
     ├── platform-apps/         # Helm chart for 11 ArgoCD Applications

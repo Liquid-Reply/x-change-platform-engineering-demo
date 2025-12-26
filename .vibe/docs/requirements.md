@@ -1,328 +1,174 @@
-# Requirements Document: Codespaces-to-Minikube Migration
+# Requirements Document: Multi-Environment IDP Support
 
 ## Executive Summary
 
-This document defines the requirements for migrating the x-change-platform-engineering-demo IDP (Internal Development Platform) from GitHub Codespaces/Kind to minikube, enabling portable local Kubernetes development.
+This document defines the requirements for the x-change-platform-engineering-demo IDP (Internal Development Platform) to support multiple Kubernetes environments: **GitHub Codespaces**, **minikube**, and **Kind (Kubernetes in Docker)**.
+
+**Implementation Approach**: All environments use `bootstrap.sh` as the single entry point.
 
 ---
 
-## REQ-1: Cluster Lifecycle Management
+## REQ-KIND-1: Kind Environment Parity ✅ IMPLEMENTED
 
-**User Story:** As a platform engineer, I want to create and manage a minikube cluster with a single command so that I can quickly set up the IDP demo locally.
+**User Story:** As a developer, I want to run the IDP on Kind so that I have a lightweight alternative to minikube that shares the Docker daemon.
 
 **Acceptance Criteria:**
 
-- WHEN the user runs `minikube_installer.py` (or equivalent) THEN the IDP SHALL create a minikube cluster with required addons (ingress, metrics-server)
-- WHEN the cluster already exists THEN the IDP SHALL offer to delete and recreate OR reuse existing cluster
-- WHEN minikube is not installed THEN the IDP SHALL display clear installation instructions
-- WHILE the cluster is being created, WHEN port mappings are configured THEN the IDP SHALL expose ports 30100 (ArgoCD), 30105 (Backstage), and 80 (apps)
+- ✅ WHEN the user runs `./bootstrap.sh kind` THEN the IDP SHALL create a Kind cluster with required port mappings
+- ✅ WHEN `platform-kind.yml` exists THEN ArgoCD SHALL use it as the root application
+- ✅ WHEN the cluster is created THEN ports 30100, 30105, 80, 4317, 4318 SHALL be mapped to localhost
 
-**Validation Checkpoint:**
+**Validation:**
 ```bash
-# Test: Cluster creation succeeds
-minikube status | grep -q "Running"
+kind get clusters | grep -q "idp"
 kubectl get nodes | grep -q "Ready"
+curl -s http://localhost:30100  # ArgoCD
+curl -s http://localhost:30105  # Backstage
 ```
 
 ---
 
-## REQ-2: Environment-Agnostic Configuration
+## REQ-KIND-2: Kind Image Preloading ✅ IMPLEMENTED
 
-**User Story:** As a developer, I want the platform to work with minimal host-specific assumptions so that I can run it on any machine with minikube installed.
+**User Story:** As a developer, I want container images preloaded into Kind so that deployments are faster.
 
 **Acceptance Criteria:**
 
-- WHEN deploying to minikube THEN the IDP SHALL NOT require `CODESPACE_NAME` environment variable
-- WHEN deploying to minikube THEN the IDP SHALL NOT require `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN`
-- WHEN deploying locally THEN the IDP SHALL use `localhost` or `$(minikube ip)` as the base domain
-- WHEN configuration placeholders are processed THEN the IDP SHALL support both Codespaces AND minikube environments via overlay/profile mechanism
+- ✅ WHEN `CLUSTER_TYPE=kind` THEN bootstrap.sh SHALL preload critical images using `kind load docker-image`
+- ✅ WHEN images are preloaded THEN ArgoCD, Backstage, and core images SHALL be available locally
+- ✅ WHEN preloading fails for an image THEN bootstrap.sh SHALL warn but continue (graceful degradation)
 
-**Validation Checkpoint:**
-```bash
-# Test: No Codespaces-specific variables required
-env | grep -v CODESPACE | grep -v GITHUB_CODESPACES
-python3 minikube_installer.py  # Should succeed without Codespaces env vars
-```
+**Implementation:** bootstrap.sh lines 153-177
 
 ---
 
-## REQ-3: GitOps Preservation
+## REQ-ENV-1: Bootstrap Entry Point ✅ IMPLEMENTED
 
-**User Story:** As a platform engineer, I want ArgoCD to manage all platform components via GitOps so that the deployment remains declarative and auditable.
+**User Story:** As a developer, I want a single command to set up the IDP for any environment.
 
 **Acceptance Criteria:**
 
-- WHEN ArgoCD is deployed THEN the IDP SHALL maintain the existing sync wave ordering (Waves 0-6)
-- WHEN a new application is onboarded THEN the IDP SHALL use the existing ApplicationSet discovery pattern
-- WHEN manifests are modified THEN ArgoCD SHALL detect and sync changes automatically
-- WHILE ArgoCD is running THEN the IDP SHALL provide access via `http://localhost:30100` or `http://$(minikube ip):30100`
+- ✅ WHEN the user runs `./bootstrap.sh minikube` THEN a minikube cluster is created
+- ✅ WHEN the user runs `./bootstrap.sh kind` THEN a Kind cluster is created
+- ✅ WHEN running in Codespaces THEN `./bootstrap.sh codespaces` works
 
-**Validation Checkpoint:**
-```bash
-# Test: ArgoCD is accessible and applications are synced
-kubectl get applications -n argocd | grep -q "Synced"
-curl -s http://$(minikube ip):30100 | grep -q "Argo CD"
-```
+**Files:**
+- `bootstrap.sh` - Main entry point
+- `config/minikube.env` - Minikube environment variables
+- `config/kind.env` - Kind environment variables
+- `config/codespaces.env` - Codespaces environment variables
 
 ---
 
-## REQ-4: Backstage In-Cluster Deployment
+## REQ-ENV-2: Environment-Agnostic Configuration ✅ IMPLEMENTED
 
-**User Story:** As a developer, I want Backstage to run in-cluster and be accessible locally so that I can use the self-service portal for application onboarding.
+**User Story:** As a developer, I want the platform to work with minimal host-specific assumptions.
 
 **Acceptance Criteria:**
 
-- WHEN Backstage is deployed THEN the IDP SHALL run Backstage in the `backstage` namespace
-- WHEN Backstage is deployed THEN the IDP SHALL configure URLs for local access (not Codespaces domains)
-- WHEN Backstage is running THEN the IDP SHALL provide access via `http://localhost:30105` or `http://$(minikube ip):30105`
-- WHEN the Software Catalog is loaded THEN Backstage SHALL discover entities from the git repository
+- ✅ WHEN deploying to minikube/Kind THEN the IDP SHALL NOT require Codespaces environment variables
+- ✅ WHEN deploying locally THEN the IDP SHALL use `localhost` as the base domain
+- ✅ WHEN configuration is processed THEN per-environment values files are used
 
-**Validation Checkpoint:**
-```bash
-# Test: Backstage is accessible and functional
-kubectl get pods -n backstage | grep -q "Running"
-curl -s http://$(minikube ip):30105 | grep -q "Backstage"
-```
+**Implementation:**
+- `gitops/platform-apps/values-minikube.yaml`
+- `gitops/platform-apps/values-kind.yaml`
+- `gitops/platform-apps/values-codespaces.yaml`
 
 ---
 
-## REQ-5: Observability Integration
+## REQ-GITOPS-1: ArgoCD GitOps Deployment ✅ IMPLEMENTED
 
-**User Story:** As a platform engineer, I want Dynatrace and OpenTelemetry integration to work locally so that I can demonstrate observability capabilities.
+**User Story:** As a platform engineer, I want ArgoCD to manage all platform components via GitOps.
 
 **Acceptance Criteria:**
 
-- WHEN Dynatrace credentials are provided THEN the IDP SHALL configure OneAgent and OTEL collector
-- IF Dynatrace credentials are NOT provided THEN the IDP SHALL skip Dynatrace components gracefully
-- WHEN OTEL collector is deployed THEN the IDP SHALL accept traces on ports 4317 (gRPC) and 4318 (HTTP)
-- WHEN Monaco configurations are applied THEN the IDP SHALL create Dynatrace dashboards, SLOs, and synthetic monitors
+- ✅ WHEN ArgoCD is deployed THEN sync wave ordering (Waves 1-6) is maintained
+- ✅ WHEN a new application is onboarded THEN the ApplicationSet discovery pattern is used
+- ✅ WHEN manifests are modified THEN ArgoCD detects and syncs changes automatically
 
-**Validation Checkpoint:**
-```bash
-# Test: OTEL collector is running (Dynatrace optional)
-kubectl get pods -n opentelemetry | grep -q "Running"
-# Test: Can send test trace
-curl -X POST http://$(minikube ip):4318/v1/traces -H "Content-Type: application/json" -d '{}'
-```
+**Root Applications:**
+- `gitops/platform-minikube.yml`
+- `gitops/platform-kind.yml`
+- `gitops/platform-codespaces.yml`
 
 ---
 
-## REQ-6: Secrets Management
+## REQ-BACKSTAGE-1: Backstage In-Cluster Deployment ✅ IMPLEMENTED
 
-**User Story:** As a developer, I want flexible secrets management so that I can use simple local secrets for development and ESO for production-like setups.
+**User Story:** As a developer, I want Backstage accessible locally for application onboarding.
 
 **Acceptance Criteria:**
 
-- WHEN deploying locally THEN the IDP SHALL support a gitignored `secrets-minikube.yaml` file
-- WHERE External Secrets Operator is available THEN the IDP SHALL support ESO with AWS/GCP/Azure/Vault backends
-- WHEN secrets are created THEN the IDP SHALL create them in the appropriate namespaces (argocd, backstage, dynatrace, opentelemetry, monaco)
-- WHEN tokens expire THEN the IDP SHALL provide a renewal mechanism (`renew_api_token.py` or equivalent)
-
-**Validation Checkpoint:**
-```bash
-# Test: Required secrets exist
-kubectl get secrets -n argocd | grep -q "github-token"
-kubectl get secrets -n backstage | grep -q "backstage-secrets"
-# Test: Secrets-minikube.yaml is gitignored
-grep -q "secrets-minikube.yaml" .gitignore
-```
+- ✅ WHEN Backstage is deployed THEN it runs in the `backstage` namespace
+- ✅ WHEN Backstage is running THEN it is accessible via `http://localhost:30105`
+- ✅ WHEN the Software Catalog is loaded THEN entities are discovered from git
 
 ---
 
-## REQ-7: Component Toggle Support
+## REQ-OTEL-1: Observability Integration ✅ IMPLEMENTED
 
-**User Story:** As a developer running on limited resources, I want to disable non-essential components so that the platform runs efficiently on minikube.
+**User Story:** As a platform engineer, I want OpenTelemetry integration for observability.
 
 **Acceptance Criteria:**
 
-- WHEN `INSTALL_KEPTN=false` THEN the IDP SHALL skip Keptn installation
-- WHERE resources are limited THEN the IDP SHALL support disabling: Keptn, OpenFeature, KubeAudit cronjobs
-- WHEN a component is disabled THEN ArgoCD SHALL NOT create an Application for that component
-- WHEN all essential components are enabled THEN the IDP SHALL deploy: ArgoCD, Backstage, Ingress, cert-manager, OTEL
-
-**Validation Checkpoint:**
-```bash
-# Test: Component toggle works
-INSTALL_KEPTN=false python3 minikube_installer.py
-kubectl get applications -n argocd | grep -v keptn  # Keptn should not exist
-```
+- ✅ WHEN Dynatrace credentials are provided THEN OneAgent and OTEL collector are configured
+- ✅ IF Dynatrace credentials are NOT provided THEN Dynatrace components are skipped gracefully
+- ✅ WHEN OTEL collector is deployed THEN traces are accepted on ports 4317/4318
 
 ---
 
-## REQ-8: Security and Isolation
+## REQ-SECRETS-1: Secrets Management ✅ IMPLEMENTED
 
-**User Story:** As a platform engineer, I want per-namespace isolation for customer applications so that multi-tenant security is demonstrated.
+**User Story:** As a developer, I want flexible secrets management for development.
 
 **Acceptance Criteria:**
 
-- WHEN a customer app namespace is created THEN the IDP SHALL apply NetworkPolicies
-- WHEN a customer app namespace is created THEN the IDP SHALL enforce PodSecurity admission (baseline or restricted)
-- WHERE image policy controls are available THEN the IDP SHALL restrict allowed image registries
-- WHEN deploying to minikube THEN the IDP SHALL use cert-manager with self-signed certificates
-
-**Validation Checkpoint:**
-```bash
-# Test: NetworkPolicies exist for customer namespaces
-kubectl get networkpolicies -A | grep -q "customer"
-# Test: PodSecurity is enforced
-kubectl get ns customer-app-namespace -o yaml | grep -q "pod-security"
-```
+- ✅ WHEN deploying locally THEN gitignored `secrets/{env}.env` files are used
+- ✅ WHEN secrets are created THEN they are placed in appropriate namespaces
+- ✅ WHEN GitHub token is configured THEN ArgoCD can access private repos
 
 ---
 
-## Scope Definition
+## Supported Environments
 
-### In-Scope
-- Minikube cluster creation and configuration
-- ArgoCD GitOps deployment (existing sync waves)
-- Backstage in-cluster with local URLs
-- Dynatrace/OTEL integration (optional, graceful degradation)
-- Secrets management (local fallback + ESO-ready)
-- Component toggles (Keptn, OpenFeature, KubeAudit)
-- Per-namespace security (NetworkPolicies, PodSecurity)
-- cert-manager with self-signed certificates
-- Application templating (preserve Backstage scaffolder placeholders)
-
-### Out-of-Scope
-- Production deployment configurations
-- Multi-cluster federation
-- External DNS integration
-- Cloud-specific load balancers
-- ACME certificate issuance (self-signed acceptable)
-- GitHub Actions workflow modifications
-- Codespaces environment removal (becomes optional overlay)
+| Environment | Entry Point | Root Application | Values File |
+|-------------|-------------|------------------|-------------|
+| Minikube | `./bootstrap.sh minikube` | `platform-minikube.yml` | `values-minikube.yaml` |
+| Kind | `./bootstrap.sh kind` | `platform-kind.yml` | `values-kind.yaml` |
+| Codespaces | `./bootstrap.sh codespaces` | `platform-codespaces.yml` | `values-codespaces.yaml` |
 
 ---
 
-## Constraints and Dependencies
+## Port Mappings
 
-### Technical Constraints
-| Constraint | Description |
-|------------|-------------|
-| TC-1 | Minikube must be installed on host machine |
-| TC-2 | Docker or Podman driver required for minikube |
-| TC-3 | Minimum 4GB RAM, 2 CPUs for minikube VM |
-| TC-4 | kubectl must be installed and configured |
-| TC-5 | Python 3.8+ required for installer scripts |
-
-### External Dependencies
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| minikube | >= 1.30.0 | Local Kubernetes cluster |
-| kubectl | >= 1.27.0 | Kubernetes CLI |
-| ArgoCD | 2.12.2 | GitOps deployment |
-| Backstage | (as defined) | Developer portal |
-| cert-manager | >= 1.12.0 | Certificate management |
-| NGINX Ingress | (as defined) | Ingress controller |
+| Port | Service | Access |
+|------|---------|--------|
+| 30100 | ArgoCD | `http://localhost:30100` |
+| 30105 | Backstage | `http://localhost:30105` |
+| 80 | Ingress/Apps | `http://localhost:80` |
+| 4317 | OTEL gRPC | Trace ingestion |
+| 4318 | OTEL HTTP | Trace ingestion |
 
 ---
 
-## Refactoring Options Analysis
+## Technical Constraints
 
-### Option A: Minimal Adaptation (Lowest Effort)
-**Approach**: Replace Kind commands with minikube equivalents; substitute Codespaces placeholders with localhost/minikube-ip.
-
-| Aspect | Details |
-|--------|---------|
-| **Changes** | Modify `cluster_installer.py` to use minikube CLI; update placeholder values |
-| **Pros** | Minimal code changes; quick to implement |
-| **Cons** | Maintains imperative substitution pattern; two code paths to maintain |
-| **Effort** | Low (1-2 days) |
-| **Risk** | Medium - divergent codepaths may cause maintenance burden |
-
-**Files Modified**:
-- `cluster_installer.py` (~50 lines)
-- `utils.py` (~20 lines)
-- `.devcontainer/` → `.minikube/` (new directory)
-
-### Option B: Environment Abstraction Layer (Medium Effort)
-**Approach**: Introduce an abstraction layer that detects environment (Codespaces vs minikube vs generic K8s) and configures accordingly.
-
-| Aspect | Details |
-|--------|---------|
-| **Changes** | New `environment.py` module; config profiles; conditional logic |
-| **Pros** | Single codebase supports multiple environments; extensible |
-| **Cons** | More complex; requires refactoring existing scripts |
-| **Effort** | Medium (3-5 days) |
-| **Risk** | Low-Medium - well-tested abstraction reduces errors |
-
-**New Files**:
-- `environments/base.py` - Abstract environment class
-- `environments/codespaces.py` - Codespaces-specific config
-- `environments/minikube.py` - Minikube-specific config
-- `config/profiles/` - Environment profile YAML files
-
-### Option C: Full Declarative/Controller-Based (Highest Effort, Most Stable)
-**Approach**: Replace imperative `cluster_installer.py` with Kubernetes-native declarative configuration using Kustomize overlays or Helm values.
-
-| Aspect | Details |
-|--------|---------|
-| **Changes** | Kustomize base + overlays; ArgoCD ApplicationSets with generators; ConfigMap-driven configuration |
-| **Pros** | Fully declarative; GitOps-native; no imperative scripts for manifest generation |
-| **Cons** | Significant refactoring; learning curve for Kustomize patterns |
-| **Effort** | High (1-2 weeks) |
-| **Risk** | Low - declarative approach is more predictable |
-
-**New Structure**:
-```
-gitops/
-  base/                    # Base manifests
-  overlays/
-    codespaces/            # Codespaces-specific patches
-    minikube/              # Minikube-specific patches
-  kustomization.yaml
-```
-
-### Option D: Hybrid Approach - Helm for Applications, Kustomize for Manifests ✅ IMPLEMENTED
-
-**Approach**: Use Helm to manage ArgoCD Application definitions while preserving Kustomize for platform manifests.
-
-| Aspect | Details |
-|--------|---------|
-| **Changes** | New `gitops/platform-apps/` Helm chart; per-environment values files; single template for all 11 apps |
-| **Pros** | Declarative app management; easy environment additions (1 values file); preserves existing manifests |
-| **Cons** | Requires Helm knowledge; two templating systems (Helm for apps, Kustomize for manifests) |
-| **Effort** | Medium (1-2 days) |
-| **Risk** | Low - Helm is well-established, minimal changes to manifests |
-
-**Implemented Structure**:
-```
-gitops/
-  platform-apps/           # Helm chart for ArgoCD Applications
-    Chart.yaml
-    values.yaml            # All 11 apps with 4 source types
-    values-minikube.yaml   # Environment override
-    values-codespaces.yaml
-    values-kind.yaml
-    templates/
-      _helpers.tpl
-      applications.yaml    # Single template rendering all apps
-  manifests/platform/      # Unchanged Kustomize manifests
-```
-
-### Implemented Approach: Option D (Hybrid Helm)
-
-**Rationale**:
-1. Replaced ~170 lines of JSON patches with ~55 lines of Helm template
-2. Adding new environments requires only 1 values file
-3. Single source of truth for all 11 platform applications
-4. Preserves existing Kustomize manifests (no migration risk)
-5. Supports 4 application source patterns: local, localMulti, helm, multiSource
+| ID | Constraint | Description |
+|----|------------|-------------|
+| TC-1 | Docker required | For Kind and minikube docker driver |
+| TC-2 | 4GB RAM minimum | Platform component requirements |
+| TC-3 | kubectl required | Kubernetes CLI |
+| TC-4 | Helm required | For ArgoCD application management |
 
 ---
 
-## Validation Checkpoints Summary
+## Validation Checkpoints
 
-| Phase | Checkpoint | Validation Command |
-|-------|------------|-------------------|
-| 1. Cluster | Minikube running | `minikube status` |
-| 2. Namespaces | All namespaces created | `kubectl get ns` |
-| 3. ArgoCD | ArgoCD accessible | `curl http://$(minikube ip):30100` |
-| 4. Secrets | All secrets exist | `kubectl get secrets -A` |
-| 5. Platform Apps | All apps synced | `kubectl get applications -n argocd` |
-| 6. Backstage | Backstage accessible | `curl http://$(minikube ip):30105` |
-| 7. OTEL | Collector running | `kubectl get pods -n opentelemetry` |
-| 8. Ingress | Ingress functional | `curl http://$(minikube ip)` |
-| 9. Customer App | App onboarding works | Create app via Backstage |
-| 10. Security | Policies applied | `kubectl get networkpolicies -A` |
-
+| Phase | Checkpoint | Command |
+|-------|------------|---------|
+| 1 | Cluster running | `kubectl get nodes` |
+| 2 | ArgoCD accessible | `curl http://localhost:30100` |
+| 3 | Backstage accessible | `curl http://localhost:30105` |
+| 4 | Apps synced | `kubectl get applications -n argocd` |
+| 5 | Secrets exist | `kubectl get secrets -n argocd` |

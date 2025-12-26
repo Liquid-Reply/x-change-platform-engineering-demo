@@ -30,11 +30,11 @@ If you follow all instructions you should have your own IDP running in a GitHub 
 ## Prerequisites
 
 **Supported Environments:**
-- **GitHub Codespaces** - Fully automated setup
-- **Minikube** - Local Kubernetes development
-- **Kind** - Kubernetes in Docker
+- **GitHub Codespaces** - Fully automated setup (see below)
+- **Minikube** - Local Kubernetes development ([README-MINIKUBE.md](README-MINIKUBE.md))
+- **Kind** - Kubernetes in Docker ([README-KIND.md](README-KIND.md))
 
-See [Setup Instructions](#setup-instructions) for environment-specific guides.
+See [Setup Instructions](#setup-instructions) for quick start, or follow the environment-specific guides above.
 
 ### Grail enabled Dynatrace SaaS Tenant
 
