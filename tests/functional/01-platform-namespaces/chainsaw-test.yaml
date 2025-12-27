@@ -56,3 +56,13 @@ spec:
               kind: Namespace
               metadata:
                 name: opentelemetry
+
+    - name: check-envoy-gateway-system-namespace
+      description: Envoy Gateway System namespace must exist
+      try:
+        - assert:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: envoy-gateway-system

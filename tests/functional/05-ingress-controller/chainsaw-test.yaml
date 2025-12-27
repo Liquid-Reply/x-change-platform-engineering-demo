@@ -1,43 +1,46 @@
-# Chainsaw Test: Ingress Controller
-# Verifies ingress-nginx controller is running
+# Chainsaw Test: Gateway Controller
+# Verifies Envoy Gateway controller is running (Gateway API)
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  name: ingress-controller
+  name: gateway-controller
 spec:
-  description: Verify ingress-nginx controller is healthy
+  description: Verify Envoy Gateway controller is healthy
   steps:
-    - name: check-ingress-nginx-controller
-      description: Ingress-nginx controller deployment must be available
+    - name: check-envoy-gateway-deployment
+      description: Envoy Gateway deployment must be available
       try:
         - assert:
             resource:
               apiVersion: apps/v1
               kind: Deployment
               metadata:
-                name: ingress-nginx-controller
-                namespace: ingress-nginx
+                name: envoy-gateway
+                namespace: envoy-gateway-system
               status:
                 (conditions[?type == 'Available']):
                   - status: "True"
 
-    - name: check-ingress-nginx-service
-      description: Ingress-nginx service must exist
+    - name: check-gatewayclass
+      description: GatewayClass 'eg' must be accepted
       try:
         - assert:
             resource:
-              apiVersion: v1
-              kind: Service
+              apiVersion: gateway.networking.k8s.io/v1
+              kind: GatewayClass
               metadata:
-                name: ingress-nginx-controller
-                namespace: ingress-nginx
+                name: eg
+              status:
+                (conditions[?type == 'Accepted']):
+                  - status: "True"
 
-    - name: check-ingress-class
-      description: IngressClass nginx must exist
+    - name: check-platform-gateway
+      description: Platform Gateway must exist in envoy-gateway-system
       try:
         - assert:
             resource:
-              apiVersion: networking.k8s.io/v1
-              kind: IngressClass
+              apiVersion: gateway.networking.k8s.io/v1
+              kind: Gateway
               metadata:
-                name: nginx
+                name: platform-gateway
+                namespace: envoy-gateway-system

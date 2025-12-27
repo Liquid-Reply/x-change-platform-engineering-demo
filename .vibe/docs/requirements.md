@@ -59,7 +59,7 @@ This document defines the requirements for migrating the x-change-platform from 
 
 **Technical Specification:**
 - Helm Chart: `oci://docker.io/envoyproxy/gateway-helm`
-- Version: v1.5.0+
+- Version: v1.3.0
 - Namespace: `envoy-gateway-system`
 - Sync Wave: 3 (parallel with ingress-nginx)
 - Source Type: `helm`
@@ -74,7 +74,7 @@ This document defines the requirements for migrating the x-change-platform from 
 
 **Acceptance Criteria:**
 
-- [ ] WHEN GatewayClass `envoy-gateway` exists THEN status SHALL show `Accepted: True`
+- [x] WHEN GatewayClass `eg` exists THEN status SHALL show `Accepted: True`
 - [ ] WHEN Gateway `platform-gateway` is created THEN it SHALL have HTTP (80) listener
 - [ ] WHEN listener `http` is configured THEN it SHALL allow routes from All namespaces
 - [ ] WHEN Gateway is deployed THEN it SHALL use NodePort service type (consistent with NGINX)
@@ -87,7 +87,7 @@ metadata:
   name: platform-gateway
   namespace: envoy-gateway-system
 spec:
-  gatewayClassName: envoy-gateway
+  gatewayClassName: eg
   listeners:
   - name: http
     protocol: HTTP
@@ -281,9 +281,9 @@ envoy-gateway:
   enabled: true
   syncWave: "3"
   sourceType: "helm"
-  helmRepo: "oci://docker.io/envoyproxy/gateway-helm"
+  helmRepo: "oci://docker.io/envoyproxy"
   chart: "gateway-helm"
-  chartVersion: "v1.5.0"
+  chartVersion: "v1.3.0"
   namespace: "envoy-gateway-system"
 ```
 
@@ -352,8 +352,8 @@ data:
 
 | ID | Constraint | Rationale |
 |----|------------|-----------|
-| TC-GW-1 | Gateway API v1.4+ | GA resources required |
-| TC-GW-2 | Envoy Gateway v1.5+ | Full feature support |
+| TC-GW-1 | Gateway API v1 | GA resources required |
+| TC-GW-2 | Envoy Gateway v1.3.0 | Full feature support |
 | TC-GW-3 | Helm source type | Consistent with cert-manager, workflows |
 | TC-GW-4 | Sync Wave 3 | Deploy with NGINX for dual-stack |
 | TC-GW-5 | NodePort service | Match current NGINX exposure |

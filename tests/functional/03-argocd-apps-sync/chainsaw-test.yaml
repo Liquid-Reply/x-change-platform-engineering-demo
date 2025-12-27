@@ -51,15 +51,29 @@ spec:
                 sync:
                   status: Synced
 
-    - name: check-ingress-nginx-app
-      description: Ingress-nginx application must be synced
+    - name: check-envoy-gateway-app
+      description: Envoy Gateway application must be synced
       try:
         - assert:
             resource:
               apiVersion: argoproj.io/v1alpha1
               kind: Application
               metadata:
-                name: ingress-nginx
+                name: envoy-gateway
+                namespace: argocd
+              status:
+                sync:
+                  status: Synced
+
+    - name: check-envoy-gateway-config-app
+      description: Envoy Gateway Config application must be synced
+      try:
+        - assert:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: envoy-gateway-config
                 namespace: argocd
               status:
                 sync:

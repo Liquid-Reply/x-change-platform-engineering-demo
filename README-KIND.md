@@ -103,7 +103,7 @@ kind delete cluster --name idp && ./bootstrap.sh kind
 │  │  │   :30100    │ │   :30105    │ │:4317/4318│ │  │
 │  │  └─────────────┘ └─────────────┘ └──────────┘ │  │
 │  │  ┌─────────────┐ ┌─────────────┐ ┌──────────┐ │  │
-│  │  │cert-manager │ │   ingress   │ │cust-apps │ │  │
+│  │  │cert-manager │ │   gateway   │ │cust-apps │ │  │
 │  │  └─────────────┘ └─────────────┘ └──────────┘ │  │
 │  └───────────────────────────────────────────────┘  │
 │                        │                             │
@@ -112,7 +112,7 @@ kind delete cluster --name idp && ./bootstrap.sh kind
                          │
               localhost:30100 (ArgoCD)
               localhost:30105 (Backstage)
-              localhost:80 (Apps via Ingress)
+              localhost:80 (Apps via Gateway API)
               localhost:4317/4318 (OTEL)
 ```
 
@@ -122,7 +122,7 @@ Defined in `.devcontainer/kind-cluster.yml`:
 
 | Host Port | Container Port | Service |
 |-----------|---------------|---------|
-| 80 | 80 | Ingress (customer apps) |
+| 80 | 80 | Gateway API (customer apps) |
 | 4317 | 4317 | OTEL gRPC |
 | 4318 | 4318 | OTEL HTTP |
 | 30100 | 30100 | ArgoCD |
@@ -267,7 +267,8 @@ chainsaw test ./01-platform-namespaces
 | `02-argocd-health` | Checks ArgoCD deployments are healthy | ~10s |
 | `03-argocd-apps-sync` | Validates ArgoCD applications are synced | ~30s |
 | `04-backstage-health` | Verifies Backstage deployment is running | ~10s |
-| `05-ingress-controller` | Checks ingress-nginx is operational | ~5s |
+| `05-ingress-controller` | Checks gateway controller is operational | ~5s |
+| `08-gateway-api` | Validates Gateway API migration | ~60s |
 | `06-secrets-present` | Validates required secrets exist | ~5s |
 | `07-kustomize-build` | Tests Kustomize overlays build correctly | ~30s |
 

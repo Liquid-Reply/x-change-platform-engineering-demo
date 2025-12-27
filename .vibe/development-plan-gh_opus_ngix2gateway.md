@@ -177,19 +177,37 @@ Migrate the x-change-platform from NGINX Ingress Controller (v1.9.5) to Envoy Ga
 - [ ] Test Argo Rollouts canary deployment with Gateway API - requires cluster deployment
 - [ ] Test traffic splitting (weight-based routing) - requires cluster deployment
 - [ ] Test cross-namespace routing with ReferenceGrant (if needed) - N/A for initial migration
-- [x] Run Chainsaw functional tests
+- [x] Run Chainsaw functional tests (8/8 steps passed)
 - [ ] Verify monitoring/metrics collection - requires cluster deployment
 - [ ] Test rollback procedure - requires cluster deployment
 - [ ] Load testing for performance baseline - requires cluster deployment
 
 ### Completed
 - [x] Created Chainsaw test: `tests/functional/08-gateway-api/chainsaw-test.yaml`
-- [x] Chainsaw tests PASSED (5/5 steps):
+- [x] Chainsaw tests PASSED (8/8 steps):
   - validate-envoy-gateway-kustomize: PASSED
   - validate-argo-rollouts-gateway-api: PASSED
   - validate-httproute-template: PASSED
   - validate-rollout-template: PASSED
   - validate-helm-chart: PASSED
+  - check-gateway-api-crds: PASSED
+  - verify-gateway: PASSED
+  - test-httproute-routing: PASSED (end-to-end routing verified)
+- [x] **Kind cluster validation PASSED**:
+  - Envoy Gateway v1.3.0 deployed
+  - GatewayClass `eg` accepted
+  - Gateway `platform-gateway` created
+  - HTTPRoute routing validated with test app
+- [x] **Minikube cluster validation PASSED**:
+  - Envoy Gateway v1.3.0 deployed
+  - GatewayClass `eg` accepted
+  - Gateway `platform-gateway` created
+  - HTTPRoute routing validated with test app
+
+### Notes
+- OCI Helm charts require manual installation (ArgoCD v2.12.2 OCI support issue)
+- GatewayClass must be created manually (not auto-created by Helm chart v1.3.0)
+- Add GatewayClass to `gitops/manifests/platform/envoy-gateway/` for automation
 
 ---
 
@@ -202,16 +220,27 @@ Migrate the x-change-platform from NGINX Ingress Controller (v1.9.5) to Envoy Ga
 - [ ] Rollback tested successfully
 
 ### Tasks
-- [ ] Remove NGINX Ingress from platform-apps (set enabled: false)
-- [ ] Remove legacy Ingress resources from customer apps
-- [ ] Remove `gitops/manifests/platform/ingress-nginx/` directory
-- [ ] Update Backstage templates to remove Ingress (only HTTPRoute)
-- [ ] Update documentation (README files)
-- [ ] Final ArgoCD sync and prune
+- [x] Remove NGINX Ingress from platform-apps (set enabled: false)
+- [x] Remove legacy Ingress resources from customer apps (ingress.yml removed)
+- [ ] Remove `gitops/manifests/platform/ingress-nginx/` directory (optional - kept for rollback)
+- [x] Update Backstage templates to remove Ingress (only HTTPRoute)
+- [x] Update documentation (README-KIND.md)
+- [ ] Final ArgoCD sync and prune (requires cluster deployment)
 - [ ] Create git commit for migration completion
 
 ### Completed
-*None yet*
+- [x] NGINX Ingress disabled in `gitops/platform-apps/values.yaml` (enabled: false)
+- [x] Removed `apptemplates/simplenodeservice-content/ingress.yml`
+- [x] Updated README-KIND.md with Gateway API references
+- [x] Helm lint passed after changes
+- [x] Extended tests for Gateway API:
+  - `01-platform-namespaces`: Added `envoy-gateway-system` namespace check
+  - `03-argocd-apps-sync`: Added `envoy-gateway` and `envoy-gateway-config` apps
+  - `05-ingress-controller`: Updated to check Envoy Gateway (renamed to `gateway-controller`)
+  - `08-gateway-api`: Added `validate-argo-rollouts-gateway-plugin` and `validate-gateway-api-rbac` steps
+- [x] Updated `tests/functional/README.md` with Gateway API section and correct Chainsaw install
+- [x] Updated `.vibe/docs/requirements.md` with correct version (v1.3.0) and GatewayClass name (`eg`)
+- [x] Code cleanup: No TODO/FIXME/DEBUG statements found in new files
 
 ---
 

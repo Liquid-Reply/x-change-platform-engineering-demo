@@ -5,4 +5,4 @@
 
 global:
   # Use the feature branch for Kind development
-  targetRevision: "gh_opus_kostumize2helm"
+  targetRevision: "gh_opus_ngix2gateway"

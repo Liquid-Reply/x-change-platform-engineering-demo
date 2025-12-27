@@ -36,7 +36,7 @@ applications:
     namespace: "dynatrace"
 
   ingress-nginx:
-    enabled: true
+    enabled: false  # Disabled - migrated to Gateway API (Envoy Gateway)
     syncWave: "3"
     sourceType: "local"
     path: "gitops/manifests/platform/ingress-nginx"
@@ -108,7 +108,7 @@ applications:
     enabled: true
     syncWave: "3"
     sourceType: "helm"
-    helmRepo: "oci://docker.io/envoyproxy/gateway-helm"
+    helmRepo: "oci://docker.io/envoyproxy"
     chart: "gateway-helm"
     chartVersion: "v1.3.0"
     namespace: "envoy-gateway-system"
