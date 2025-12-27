@@ -1,174 +1,396 @@
-# Requirements Document: Multi-Environment IDP Support
+# Requirements Document: Gateway API Migration
 
 ## Executive Summary
 
-This document defines the requirements for the x-change-platform-engineering-demo IDP (Internal Development Platform) to support multiple Kubernetes environments: **GitHub Codespaces**, **minikube**, and **Kind (Kubernetes in Docker)**.
+This document defines the requirements for migrating the x-change-platform from **NGINX Ingress Controller v1.9.5** to **Envoy Gateway** implementing the Kubernetes Gateway API standard.
 
-**Implementation Approach**: All environments use `bootstrap.sh` as the single entry point.
+**Critical Timeline**: NGINX Ingress Controller retires **March 2026**
+**Target Implementation**: Envoy Gateway (Gateway API v1.4 conformant)
+**Migration Strategy**: Dual-Stack (parallel deployment with gradual service migration)
 
 ---
 
-## REQ-KIND-1: Kind Environment Parity ✅ IMPLEMENTED
+## Migration Context
 
-**User Story:** As a developer, I want to run the IDP on Kind so that I have a lightweight alternative to minikube that shares the Docker daemon.
+### Current State Analysis
+
+| Component | Current Value |
+|-----------|---------------|
+| Ingress Controller | NGINX Ingress v1.9.5 |
+| IngressClass | `nginx` (k8s.io/ingress-nginx) |
+| Service Type | NodePort (ports 80, 443) |
+| Sync Wave | 3 |
+| Namespace | ingress-nginx |
+| Rollout Strategy | Argo Rollouts Canary (replica-based, not traffic-weighted) |
+
+### NGINX Annotations in Use
+
+| Annotation | Purpose | Gateway API Equivalent |
+|------------|---------|----------------------|
+| `kubernetes.io/ingress.class: nginx` | IngressClass selection | `parentRefs` in HTTPRoute |
+| `nginx.ingress.kubernetes.io/ssl-redirect: "false"` | Disable SSL redirect | HTTPRoute RedirectFilter |
+| `nginx.ingress.kubernetes.io/force-ssl-redirect: "false"` | Disable forced SSL | HTTPRoute RedirectFilter |
+| `nginx.ingress.kubernetes.io/use-regex: "true"` | Enable regex paths | HTTPRoute PathPrefix/RegularExpression |
+| `nginx.ingress.kubernetes.io/rewrite-target: /$2` | URL rewriting | HTTPRoute URLRewriteFilter |
+
+### Current Ingress Path Pattern
+```
+/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}(/)*(.*)
+```
+- Uses regex capture groups for URL rewriting
+- PathType: `ImplementationSpecific`
+
+---
+
+## Functional Requirements
+
+### REQ-GW-1: Gateway API Controller Deployment
+
+**Priority**: Must-Have
+
+**User Story:** As a platform engineer, I want Envoy Gateway deployed alongside NGINX Ingress so that I can migrate services incrementally.
 
 **Acceptance Criteria:**
 
-- ✅ WHEN the user runs `./bootstrap.sh kind` THEN the IDP SHALL create a Kind cluster with required port mappings
-- ✅ WHEN `platform-kind.yml` exists THEN ArgoCD SHALL use it as the root application
-- ✅ WHEN the cluster is created THEN ports 30100, 30105, 80, 4317, 4318 SHALL be mapped to localhost
+- [ ] WHEN `envoy-gateway` is enabled in `values.yaml` THEN the Envoy Gateway controller SHALL be deployed via Helm
+- [ ] WHEN the controller is running THEN it SHALL register a GatewayClass resource
+- [ ] WHEN a Gateway resource references the GatewayClass THEN status SHALL show `Accepted: True`
+- [ ] WHEN both NGINX and Envoy Gateway are running THEN they SHALL NOT conflict
 
-**Validation:**
-```bash
-kind get clusters | grep -q "idp"
-kubectl get nodes | grep -q "Ready"
-curl -s http://localhost:30100  # ArgoCD
-curl -s http://localhost:30105  # Backstage
+**Technical Specification:**
+- Helm Chart: `oci://docker.io/envoyproxy/gateway-helm`
+- Version: v1.5.0+
+- Namespace: `envoy-gateway-system`
+- Sync Wave: 3 (parallel with ingress-nginx)
+- Source Type: `helm`
+
+---
+
+### REQ-GW-2: GatewayClass and Gateway Configuration
+
+**Priority**: Must-Have
+
+**User Story:** As a platform engineer, I want a properly configured Gateway resource that accepts traffic for all customer applications.
+
+**Acceptance Criteria:**
+
+- [ ] WHEN GatewayClass `envoy-gateway` exists THEN status SHALL show `Accepted: True`
+- [ ] WHEN Gateway `platform-gateway` is created THEN it SHALL have HTTP (80) listener
+- [ ] WHEN listener `http` is configured THEN it SHALL allow routes from All namespaces
+- [ ] WHEN Gateway is deployed THEN it SHALL use NodePort service type (consistent with NGINX)
+
+**Gateway Resource Specification:**
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: platform-gateway
+  namespace: envoy-gateway-system
+spec:
+  gatewayClassName: envoy-gateway
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
 ```
 
 ---
 
-## REQ-KIND-2: Kind Image Preloading ✅ IMPLEMENTED
+### REQ-GW-3: HTTPRoute Template for Customer Apps
 
-**User Story:** As a developer, I want container images preloaded into Kind so that deployments are faster.
+**Priority**: Must-Have
 
-**Acceptance Criteria:**
-
-- ✅ WHEN `CLUSTER_TYPE=kind` THEN bootstrap.sh SHALL preload critical images using `kind load docker-image`
-- ✅ WHEN images are preloaded THEN ArgoCD, Backstage, and core images SHALL be available locally
-- ✅ WHEN preloading fails for an image THEN bootstrap.sh SHALL warn but continue (graceful degradation)
-
-**Implementation:** bootstrap.sh lines 153-177
-
----
-
-## REQ-ENV-1: Bootstrap Entry Point ✅ IMPLEMENTED
-
-**User Story:** As a developer, I want a single command to set up the IDP for any environment.
+**User Story:** As a developer, I want Backstage templates to generate HTTPRoute resources so that new applications use Gateway API.
 
 **Acceptance Criteria:**
 
-- ✅ WHEN the user runs `./bootstrap.sh minikube` THEN a minikube cluster is created
-- ✅ WHEN the user runs `./bootstrap.sh kind` THEN a Kind cluster is created
-- ✅ WHEN running in Codespaces THEN `./bootstrap.sh codespaces` works
+- [ ] WHEN Backstage scaffolds a new application THEN an HTTPRoute resource SHALL be generated
+- [ ] WHEN the HTTPRoute is created THEN it SHALL reference `platform-gateway` in `envoy-gateway-system`
+- [ ] WHEN the HTTPRoute specifies a path THEN it SHALL match the current URL pattern
+- [ ] WHEN URL rewriting is needed THEN HTTPRoute URLRewriteFilter SHALL strip the prefix
 
-**Files:**
-- `bootstrap.sh` - Main entry point
-- `config/minikube.env` - Minikube environment variables
-- `config/kind.env` - Kind environment variables
-- `config/codespaces.env` - Codespaces environment variables
+**HTTPRoute Template Pattern:**
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: "${{ values.projectName }}-${{ values.teamIdentifier }}"
+  namespace: "${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}"
+  labels:
+    dt.owner: "${{ values.teamIdentifier }}"
+spec:
+  parentRefs:
+  - name: platform-gateway
+    namespace: envoy-gateway-system
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: "/${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}"
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /
+    backendRefs:
+    - name: "${{ values.projectName }}-${{ values.teamIdentifier }}"
+      port: 80
+```
 
 ---
 
-## REQ-ENV-2: Environment-Agnostic Configuration ✅ IMPLEMENTED
+### REQ-GW-4: Argo Rollouts Gateway API Integration
 
-**User Story:** As a developer, I want the platform to work with minimal host-specific assumptions.
+**Priority**: Must-Have
+
+**User Story:** As a platform engineer, I want Argo Rollouts to use Gateway API for traffic-weighted canary deployments.
 
 **Acceptance Criteria:**
 
-- ✅ WHEN deploying to minikube/Kind THEN the IDP SHALL NOT require Codespaces environment variables
-- ✅ WHEN deploying locally THEN the IDP SHALL use `localhost` as the base domain
-- ✅ WHEN configuration is processed THEN per-environment values files are used
+- [ ] WHEN Argo Rollouts is configured THEN the Gateway API traffic router plugin SHALL be installed
+- [ ] WHEN a Rollout uses canary strategy THEN traffic weights SHALL be managed via HTTPRoute
+- [ ] WHEN canary weight is set to 10% THEN 10% of traffic SHALL route to canary pods
+- [ ] WHEN rollout completes THEN HTTPRoute SHALL route 100% to stable service
 
-**Implementation:**
-- `gitops/platform-apps/values-minikube.yaml`
-- `gitops/platform-apps/values-kind.yaml`
-- `gitops/platform-apps/values-codespaces.yaml`
+**Current Rollout (replica-based - no traffic routing):**
+```yaml
+strategy:
+  canary:
+    steps:
+    - setWeight: 50
+    - pause: {duration: 5s}
+    - setWeight: 100
+```
+
+**Target Rollout (Gateway API traffic-weighted):**
+```yaml
+strategy:
+  canary:
+    canaryService: "${{ values.projectName }}-${{ values.teamIdentifier }}-canary"
+    stableService: "${{ values.projectName }}-${{ values.teamIdentifier }}-stable"
+    trafficRouting:
+      plugins:
+        argoproj-labs/gatewayAPI:
+          httpRoute: "${{ values.projectName }}-${{ values.teamIdentifier }}"
+          namespace: "${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}"
+    steps:
+    - setWeight: 10
+    - pause: {duration: 30s}
+    - setWeight: 30
+    - pause: {duration: 30s}
+    - setWeight: 60
+    - pause: {duration: 30s}
+    - setWeight: 100
+```
 
 ---
 
-## REQ-GITOPS-1: ArgoCD GitOps Deployment ✅ IMPLEMENTED
+### REQ-GW-5: Stable and Canary Service Resources
 
-**User Story:** As a platform engineer, I want ArgoCD to manage all platform components via GitOps.
+**Priority**: Must-Have
+
+**User Story:** As a platform engineer, I want separate stable and canary Services for traffic splitting.
 
 **Acceptance Criteria:**
 
-- ✅ WHEN ArgoCD is deployed THEN sync wave ordering (Waves 1-6) is maintained
-- ✅ WHEN a new application is onboarded THEN the ApplicationSet discovery pattern is used
-- ✅ WHEN manifests are modified THEN ArgoCD detects and syncs changes automatically
+- [ ] WHEN a customer app is deployed THEN stable Service SHALL exist (`*-stable`)
+- [ ] WHEN a customer app is deployed THEN canary Service SHALL exist (`*-canary`)
+- [ ] WHEN Argo Rollouts manages traffic THEN it SHALL update HTTPRoute weights
+- [ ] WHEN the current single Service exists THEN it SHALL be split into stable/canary
 
-**Root Applications:**
-- `gitops/platform-minikube.yml`
-- `gitops/platform-kind.yml`
-- `gitops/platform-codespaces.yml`
+**Service Template Updates Required:**
+- Current: Single Service (`${{ values.projectName }}-${{ values.teamIdentifier }}`)
+- Target: Two Services (`*-stable` and `*-canary`) + root Service for non-canary access
 
 ---
 
-## REQ-BACKSTAGE-1: Backstage In-Cluster Deployment ✅ IMPLEMENTED
+### REQ-GW-6: Dual-Stack Migration Support
 
-**User Story:** As a developer, I want Backstage accessible locally for application onboarding.
+**Priority**: Must-Have
+
+**User Story:** As a platform engineer, I want both NGINX Ingress and Envoy Gateway running simultaneously.
 
 **Acceptance Criteria:**
 
-- ✅ WHEN Backstage is deployed THEN it runs in the `backstage` namespace
-- ✅ WHEN Backstage is running THEN it is accessible via `http://localhost:30105`
-- ✅ WHEN the Software Catalog is loaded THEN entities are discovered from git
+- [ ] WHEN both controllers are deployed THEN they SHALL use separate namespaces
+- [ ] WHEN an Ingress resource exists THEN NGINX SHALL handle it
+- [ ] WHEN an HTTPRoute exists THEN Envoy Gateway SHALL handle it
+- [ ] WHEN a service has both Ingress and HTTPRoute THEN both SHALL be functional
+- [ ] WHEN migration is complete THEN NGINX Ingress SHALL be cleanly removable
 
 ---
 
-## REQ-OTEL-1: Observability Integration ✅ IMPLEMENTED
+## Non-Functional Requirements
 
-**User Story:** As a platform engineer, I want OpenTelemetry integration for observability.
+### REQ-NFR-1: Zero Downtime Migration
+
+**Priority**: Must-Have
 
 **Acceptance Criteria:**
 
-- ✅ WHEN Dynatrace credentials are provided THEN OneAgent and OTEL collector are configured
-- ✅ IF Dynatrace credentials are NOT provided THEN Dynatrace components are skipped gracefully
-- ✅ WHEN OTEL collector is deployed THEN traces are accepted on ports 4317/4318
+- [ ] WHEN services are migrated THEN no request errors SHALL occur
+- [ ] WHEN rollback is needed THEN previous state SHALL be restorable within 5 minutes
+- [ ] WHEN HTTPRoute is created THEN it SHALL be validated before traffic shift
 
 ---
 
-## REQ-SECRETS-1: Secrets Management ✅ IMPLEMENTED
+### REQ-NFR-2: Observability Parity
 
-**User Story:** As a developer, I want flexible secrets management for development.
+**Priority**: Should-Have
 
 **Acceptance Criteria:**
 
-- ✅ WHEN deploying locally THEN gitignored `secrets/{env}.env` files are used
-- ✅ WHEN secrets are created THEN they are placed in appropriate namespaces
-- ✅ WHEN GitHub token is configured THEN ArgoCD can access private repos
+- [ ] WHEN Envoy Gateway handles traffic THEN Prometheus metrics SHALL be available
+- [ ] WHEN OpenTelemetry is configured THEN traces SHALL flow through Envoy
+- [ ] WHEN Dynatrace is enabled THEN Envoy metrics SHALL be exportable
 
 ---
 
-## Supported Environments
+### REQ-NFR-3: GitOps Compatibility
 
-| Environment | Entry Point | Root Application | Values File |
-|-------------|-------------|------------------|-------------|
-| Minikube | `./bootstrap.sh minikube` | `platform-minikube.yml` | `values-minikube.yaml` |
-| Kind | `./bootstrap.sh kind` | `platform-kind.yml` | `values-kind.yaml` |
-| Codespaces | `./bootstrap.sh codespaces` | `platform-codespaces.yml` | `values-codespaces.yaml` |
+**Priority**: Must-Have
+
+**Acceptance Criteria:**
+
+- [ ] WHEN Envoy Gateway is added to `values.yaml` THEN ArgoCD SHALL deploy it
+- [ ] WHEN manifests are modified THEN ArgoCD SHALL detect and sync changes
+- [ ] WHEN sync wave ordering is applied THEN Gateway SHALL deploy at wave 3
 
 ---
 
-## Port Mappings
+## Integration Requirements
 
-| Port | Service | Access |
-|------|---------|--------|
-| 30100 | ArgoCD | `http://localhost:30100` |
-| 30105 | Backstage | `http://localhost:30105` |
-| 80 | Ingress/Apps | `http://localhost:80` |
-| 4317 | OTEL gRPC | Trace ingestion |
-| 4318 | OTEL HTTP | Trace ingestion |
+### REQ-INT-1: ArgoCD Application Definition
+
+**Priority**: Must-Have
+
+**Acceptance Criteria:**
+
+- [ ] WHEN `envoy-gateway` is in `values.yaml` THEN ArgoCD Application SHALL be created
+- [ ] WHEN source type is `helm` THEN OCI Helm chart SHALL be referenced
+- [ ] WHEN namespace is specified THEN `envoy-gateway-system` SHALL be used
+
+**Application Definition:**
+```yaml
+# In gitops/platform-apps/values.yaml
+envoy-gateway:
+  enabled: true
+  syncWave: "3"
+  sourceType: "helm"
+  helmRepo: "oci://docker.io/envoyproxy/gateway-helm"
+  chart: "gateway-helm"
+  chartVersion: "v1.5.0"
+  namespace: "envoy-gateway-system"
+```
+
+---
+
+### REQ-INT-2: Backstage Template Updates
+
+**Priority**: Must-Have
+
+**Acceptance Criteria:**
+
+- [ ] WHEN `simplenodeservice` template exists THEN `httproute.yml` SHALL be added
+- [ ] WHEN template kustomization is updated THEN HTTPRoute SHALL be included
+- [ ] WHEN dual-stack is active THEN both `ingress.yml` and `httproute.yml` SHALL exist
+
+---
+
+### REQ-INT-3: Argo Rollouts Plugin Configuration
+
+**Priority**: Must-Have
+
+**Acceptance Criteria:**
+
+- [ ] WHEN Argo Rollouts ConfigMap is updated THEN Gateway API plugin SHALL be registered
+- [ ] WHEN plugin binary is specified THEN correct version SHALL be referenced
+- [ ] WHEN Rollout uses plugin THEN traffic routing SHALL function
+
+**ConfigMap Update:**
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argo-rollouts-config
+  namespace: argo-rollouts
+data:
+  trafficRouterPlugins: |
+    - name: "argoproj-labs/gatewayAPI"
+      location: "https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.5.0/gateway-api-plugin-linux-amd64"
+```
+
+---
+
+## Stakeholders
+
+| Role | Responsibility | Priority |
+|------|----------------|----------|
+| Platform Engineers | Implement migration, configure Gateway | Primary |
+| Developers | Use templates, deploy applications | Consumer |
+| DevOps/SRE | Monitor platform health | Operational |
+
+---
+
+## Success Criteria
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Service availability during migration | 100% | No error spikes in monitoring |
+| HTTPRoute acceptance rate | 100% | All HTTPRoutes show `Accepted: True` |
+| Argo Rollouts canary success | 100% | Traffic weights applied correctly |
+| Migration completion | Before March 2026 | NGINX Ingress removed |
+| Rollback time | < 5 minutes | Tested procedure |
 
 ---
 
 ## Technical Constraints
 
-| ID | Constraint | Description |
-|----|------------|-------------|
-| TC-1 | Docker required | For Kind and minikube docker driver |
-| TC-2 | 4GB RAM minimum | Platform component requirements |
-| TC-3 | kubectl required | Kubernetes CLI |
-| TC-4 | Helm required | For ArgoCD application management |
+| ID | Constraint | Rationale |
+|----|------------|-----------|
+| TC-GW-1 | Gateway API v1.4+ | GA resources required |
+| TC-GW-2 | Envoy Gateway v1.5+ | Full feature support |
+| TC-GW-3 | Helm source type | Consistent with cert-manager, workflows |
+| TC-GW-4 | Sync Wave 3 | Deploy with NGINX for dual-stack |
+| TC-GW-5 | NodePort service | Match current NGINX exposure |
 
 ---
 
-## Validation Checkpoints
+## Out of Scope
 
-| Phase | Checkpoint | Command |
-|-------|------------|---------|
-| 1 | Cluster running | `kubectl get nodes` |
-| 2 | ArgoCD accessible | `curl http://localhost:30100` |
-| 3 | Backstage accessible | `curl http://localhost:30105` |
-| 4 | Apps synced | `kubectl get applications -n argocd` |
-| 5 | Secrets exist | `kubectl get secrets -n argocd` |
+| Item | Reason |
+|------|--------|
+| GRPCRoute | No gRPC services currently |
+| TCPRoute/UDPRoute | All services are HTTP-based |
+| Service Mesh (GAMMA) | Future enhancement |
+| mTLS | Future enhancement |
+| Rate limiting policies | Post-migration enhancement |
+| JWT authentication | Post-migration enhancement |
+
+---
+
+## Validation Commands
+
+```bash
+# Verify Gateway API CRDs
+kubectl get crds | grep gateway.networking.k8s.io
+
+# Verify GatewayClass
+kubectl get gatewayclasses
+
+# Verify Gateway
+kubectl get gateways -n envoy-gateway-system
+
+# Verify HTTPRoutes
+kubectl get httproutes -A
+
+# Verify Envoy Gateway pods
+kubectl get pods -n envoy-gateway-system
+
+# Test traffic routing
+curl -v http://localhost/<app-path>
+```

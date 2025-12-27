@@ -104,6 +104,27 @@ applications:
     namespace: "open-feature-operator-system"
     # No helmValues - uses defaults
 
+  envoy-gateway:
+    enabled: true
+    syncWave: "3"
+    sourceType: "helm"
+    helmRepo: "oci://docker.io/envoyproxy/gateway-helm"
+    chart: "gateway-helm"
+    chartVersion: "v1.3.0"
+    namespace: "envoy-gateway-system"
+    helmValues: |
+      config:
+        envoyGateway:
+          gateway:
+            controllerName: gateway.envoyproxy.io/gatewayclass-controller
+
+  envoy-gateway-config:
+    enabled: true
+    syncWave: "4"
+    sourceType: "local"
+    path: "gitops/manifests/platform/envoy-gateway"
+    namespace: "envoy-gateway-system"
+
   # =============================================================================
   # Pattern C: Multi-source (local path + external Helm chart)
   # =============================================================================

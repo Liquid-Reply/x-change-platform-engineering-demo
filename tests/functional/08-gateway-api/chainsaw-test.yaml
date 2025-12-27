@@ -1,0 +1,122 @@
+# Chainsaw Test: Gateway API Validation
+# Verifies Gateway API resources and Argo Rollouts integration
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: gateway-api
+spec:
+  description: Verify Gateway API migration resources are valid
+  steps:
+    - name: validate-envoy-gateway-kustomize
+      description: Envoy Gateway manifests must build without errors
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              #!/bin/bash
+              set -e
+              REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CHAINSAW_REPO_ROOT:-/workspaces/x-change-platform-engineering-demo}")
+              cd "$REPO_ROOT"
+              OUTPUT=$(kustomize build gitops/manifests/platform/envoy-gateway 2>&1)
+              if ! echo "$OUTPUT" | grep -q "kind: Gateway"; then
+                echo "Gateway resource not found"
+                exit 1
+              fi
+              echo "Envoy Gateway kustomize build: PASSED"
+
+    - name: validate-argo-rollouts-gateway-api
+      description: Argo Rollouts Gateway API plugin resources must exist
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              #!/bin/bash
+              set -e
+              REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CHAINSAW_REPO_ROOT:-/workspaces/x-change-platform-engineering-demo}")
+              cd "$REPO_ROOT"
+              OUTPUT=$(kustomize build gitops/manifests/platform/argo-rollouts 2>&1)
+              if ! echo "$OUTPUT" | grep -q "argo-rollouts-gateway-api"; then
+                echo "Gateway API RBAC not found"
+                exit 1
+              fi
+              if ! echo "$OUTPUT" | grep -q "argoproj-labs/gatewayAPI"; then
+                echo "Gateway API plugin config not found"
+                exit 1
+              fi
+              echo "Argo Rollouts Gateway API config: PASSED"
+
+    - name: validate-httproute-template
+      description: HTTPRoute template must have valid structure
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              #!/bin/bash
+              set -e
+              REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CHAINSAW_REPO_ROOT:-/workspaces/x-change-platform-engineering-demo}")
+              cd "$REPO_ROOT"
+              TEMPLATE="apptemplates/simplenodeservice-content/httproute.yml"
+              if [ ! -f "$TEMPLATE" ]; then
+                echo "HTTPRoute template not found: $TEMPLATE"
+                exit 1
+              fi
+              if ! grep -q "gateway.networking.k8s.io/v1" "$TEMPLATE"; then
+                echo "HTTPRoute must use gateway.networking.k8s.io/v1"
+                exit 1
+              fi
+              if ! grep -q "platform-gateway" "$TEMPLATE"; then
+                echo "HTTPRoute must reference platform-gateway"
+                exit 1
+              fi
+              if ! grep -q "stable" "$TEMPLATE" || ! grep -q "canary" "$TEMPLATE"; then
+                echo "HTTPRoute must have stable and canary backendRefs"
+                exit 1
+              fi
+              echo "HTTPRoute template validation: PASSED"
+
+    - name: validate-rollout-template
+      description: Rollout template must have Gateway API traffic routing
+      try:
+        - script:
+            timeout: 30s
+            content: |
+              #!/bin/bash
+              set -e
+              REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CHAINSAW_REPO_ROOT:-/workspaces/x-change-platform-engineering-demo}")
+              cd "$REPO_ROOT"
+              TEMPLATE="apptemplates/simplenodeservice-content/rollout.yml"
+              if ! grep -q "stableService" "$TEMPLATE"; then
+                echo "Rollout must have stableService"
+                exit 1
+              fi
+              if ! grep -q "canaryService" "$TEMPLATE"; then
+                echo "Rollout must have canaryService"
+                exit 1
+              fi
+              if ! grep -q "argoproj-labs/gatewayAPI" "$TEMPLATE"; then
+                echo "Rollout must use Gateway API plugin"
+                exit 1
+              fi
+              echo "Rollout template validation: PASSED"
+
+    - name: validate-helm-chart
+      description: Helm chart must include envoy-gateway apps
+      try:
+        - script:
+            timeout: 60s
+            content: |
+              #!/bin/bash
+              set -e
+              REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "${CHAINSAW_REPO_ROOT:-/workspaces/x-change-platform-engineering-demo}")
+              cd "$REPO_ROOT"
+              helm lint gitops/platform-apps
+              OUTPUT=$(helm template platform gitops/platform-apps 2>&1)
+              if ! echo "$OUTPUT" | grep -q "name: envoy-gateway"; then
+                echo "envoy-gateway application not found"
+                exit 1
+              fi
+              if ! echo "$OUTPUT" | grep -q "name: envoy-gateway-config"; then
+                echo "envoy-gateway-config application not found"
+                exit 1
+              fi
+              echo "Helm chart validation: PASSED"

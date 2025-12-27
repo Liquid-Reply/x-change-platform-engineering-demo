@@ -242,6 +242,39 @@ kind delete cluster --name idp
     └── manifests/platform/   # Kubernetes manifests (Kustomize)
 ```
 
+## Running Tests
+
+The platform includes functional tests using [Chainsaw](https://kyverno.github.io/chainsaw/):
+
+```bash
+# Install chainsaw (if not already installed)
+brew tap kyverno/chainsaw https://github.com/kyverno/chainsaw
+brew install chainsaw
+
+# Run all tests
+cd tests/functional
+chainsaw test .
+
+# Run specific test
+chainsaw test ./01-platform-namespaces
+```
+
+### Test Suite
+
+| Test | Description | Duration |
+|------|-------------|----------|
+| `01-platform-namespaces` | Verifies all required namespaces exist | ~5s |
+| `02-argocd-health` | Checks ArgoCD deployments are healthy | ~10s |
+| `03-argocd-apps-sync` | Validates ArgoCD applications are synced | ~30s |
+| `04-backstage-health` | Verifies Backstage deployment is running | ~10s |
+| `05-ingress-controller` | Checks ingress-nginx is operational | ~5s |
+| `06-secrets-present` | Validates required secrets exist | ~5s |
+| `07-kustomize-build` | Tests Kustomize overlays build correctly | ~30s |
+
+See `tests/functional/README.md` for detailed test documentation.
+
+---
+
 ## Adding Dynatrace Integration
 
 To enable full observability with Dynatrace:

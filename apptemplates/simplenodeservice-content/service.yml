@@ -1,8 +1,43 @@
 ---
+# Primary service - used by Ingress (legacy)
 apiVersion: v1
 kind: Service
 metadata:
   name: "${{ values.projectName }}-${{ values.teamIdentifier }}"
+  namespace: "${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}"
+  labels:
+    dt.owner: "${{ values.teamIdentifier }}"
+spec:
+  ports:
+  - port: 80
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: "userinterface"
+---
+# Stable service - for Gateway API traffic routing
+apiVersion: v1
+kind: Service
+metadata:
+  name: "${{ values.projectName }}-${{ values.teamIdentifier }}-stable"
+  namespace: "${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}"
+  labels:
+    dt.owner: "${{ values.teamIdentifier }}"
+spec:
+  ports:
+  - port: 80
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app.kubernetes.io/name: "userinterface"
+---
+# Canary service - for Gateway API traffic routing
+apiVersion: v1
+kind: Service
+metadata:
+  name: "${{ values.projectName }}-${{ values.teamIdentifier }}-canary"
   namespace: "${{ values.projectName }}-${{ values.teamIdentifier }}-${{ values.releaseStage }}"
   labels:
     dt.owner: "${{ values.teamIdentifier }}"

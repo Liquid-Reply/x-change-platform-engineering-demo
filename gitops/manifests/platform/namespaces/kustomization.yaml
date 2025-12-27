@@ -7,6 +7,7 @@ resources:
   - backstage.yaml
   - cert-manager.yaml
   - dt.yaml
+  - envoy-gateway-system.yaml
   - ingress-nginx.yaml
   - keptn.yaml
   - kubeaudit.yaml
