@@ -12,10 +12,10 @@
 
 ## Acceptance Criteria
 
-- [ ] MOD-002 complete and verified
-- [ ] `gitops/applications/` directory deleted
-- [ ] No references to `gitops/applications/` remain in codebase
-- [ ] Chainsaw static tests pass
+- [x] MOD-002 complete and verified
+- [x] `gitops/applications/` directory deleted
+- [x] No references to `gitops/applications/` remain in active code (yml/yaml/sh)
+- [x] Helm lint and template validation passes
 
 ## Validate
 

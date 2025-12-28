@@ -9,7 +9,7 @@ spec:
   source:
     path: "gitops/platform-apps"
     repoURL: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
-    targetRevision: gh_opus_ngix2gateway
+    targetRevision: feature/MOD-003
     helm:
       valueFiles:
         - values-kind.yaml

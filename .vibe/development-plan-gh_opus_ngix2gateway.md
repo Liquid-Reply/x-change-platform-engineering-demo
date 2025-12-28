@@ -225,8 +225,8 @@ Migrate the x-change-platform from NGINX Ingress Controller (v1.9.5) to Envoy Ga
 - [ ] Remove `gitops/manifests/platform/ingress-nginx/` directory (optional - kept for rollback)
 - [x] Update Backstage templates to remove Ingress (only HTTPRoute)
 - [x] Update documentation (README-KIND.md)
-- [ ] Final ArgoCD sync and prune (requires cluster deployment)
-- [ ] Create git commit for migration completion
+- [x] Final ArgoCD sync and prune (requires cluster deployment)
+- [x] Create git commit for migration completion
 
 ### Completed
 - [x] NGINX Ingress disabled in `gitops/platform-apps/values.yaml` (enabled: false)
@@ -241,6 +241,10 @@ Migrate the x-change-platform from NGINX Ingress Controller (v1.9.5) to Envoy Ga
 - [x] Updated `tests/functional/README.md` with Gateway API section and correct Chainsaw install
 - [x] Updated `.vibe/docs/requirements.md` with correct version (v1.3.0) and GatewayClass name (`eg`)
 - [x] Code cleanup: No TODO/FIXME/DEBUG statements found in new files
+- [x] ArgoCD sync completed - platform app synced to new revision
+- [x] `ingress-nginx` ArgoCD application pruned from platform apps
+- [x] Envoy Gateway running: controller + proxy pods healthy
+- [x] GatewayClass `eg` Accepted, Gateway `platform-gateway` Programmed
 
 ---
 
