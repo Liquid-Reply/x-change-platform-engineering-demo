@@ -274,8 +274,8 @@ kubectl -n backstage create secret generic backstage-secrets \
   --from-literal=ARGOCD_PORT_NUMBER="${ARGOCD_PORT}" \
   --from-literal=ARGOCD_TOKEN="${ARGOCD_TOKEN}" \
   --from-literal=GITHUB_TOKEN="${GITHUB_TOKEN}" \
-  --from-literal=GITHUB_ORG="$(echo "${REPO_URL}" | sed -E 's|https://github.com/([^/]+)/.*|\1|')" \
-  --from-literal=GITHUB_REPO="$(echo "${REPO_URL}" | sed -E 's|https://github.com/[^/]+/([^/.]+).*|\1|')" \
+  --from-literal=GITHUB_ORG="$(git -C "${SCRIPT_DIR}" remote get-url origin | sed -E 's|.*github.com[:/]([^/]+)/.*|\1|')" \
+  --from-literal=GITHUB_REPO="$(git -C "${SCRIPT_DIR}" remote get-url origin | sed -E 's|.*github.com[:/][^/]+/([^/.]+).*|\1|')" \
   --from-literal=GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN="${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-}" \
   --from-literal=DT_TENANT_NAME="${DT_ENV_NAME:-placeholder}" \
   --from-literal=DT_TENANT_LIVE="${DT_TENANT_LIVE_URL}" \
