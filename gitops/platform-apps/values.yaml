@@ -184,3 +184,14 @@ applications:
               exporters: [otlphttp]
             logs:
              exporters: [otlphttp]
+
+  # =============================================================================
+  # Pattern A: Local path - Codespaces only
+  # =============================================================================
+
+  keptn:
+    enabled: false  # Only enabled in codespaces
+    syncWave: "4"
+    sourceType: "local"
+    path: "gitops/manifests/platform/keptn"
+    namespace: "keptn"

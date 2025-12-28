@@ -1,5 +1,6 @@
-# Default platform configuration - uses codespaces overlay
+# Default platform configuration - uses Codespaces values
 # For minikube, use platform-minikube.yml instead
+# For kind, use platform-kind.yml instead
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -9,9 +10,12 @@ metadata:
     dt.owner: "platform_team"
 spec:
   source:
-    path: "gitops/applications/overlays/codespaces"
+    path: "gitops/platform-apps"
     repoURL: "https://github.com/Liquid-Reply/x-change-platform-engineering-demo.git"
     targetRevision: main
+    helm:
+      valueFiles:
+        - values-codespaces.yaml
   destination:
     namespace: argocd
     server: 'https://kubernetes.default.svc'

@@ -4,5 +4,14 @@
 # Only values that differ from values.yaml need to be specified here.
 
 global:
-  # Codespaces uses main branch
+  # Use main branch for Codespaces (production-like)
   targetRevision: "main"
+
+applications:
+  # Enable Keptn for Codespaces (lifecycle toolkit)
+  keptn:
+    enabled: true
+
+  # Disable ingress-nginx (use Gateway API instead)
+  ingress-nginx:
+    enabled: false

@@ -12,11 +12,11 @@
 
 ## Acceptance Criteria
 
-- [ ] Create `values-codespaces.yaml` with codespaces-specific settings
-- [ ] Update `platform.yml` to use Helm chart with valueFiles
-- [ ] Codespaces deployment works with new configuration
-- [ ] Compare Kustomize vs Helm output for parity
-- [ ] Chainsaw static tests pass
+- [x] Create `values-codespaces.yaml` with codespaces-specific settings
+- [x] Update `platform.yml` to use Helm chart with valueFiles
+- [x] Codespaces deployment works with new configuration
+- [x] Compare Kustomize vs Helm output for parity (keptn added to Helm)
+- [x] Chainsaw static tests pass
 
 ## Validate
 
